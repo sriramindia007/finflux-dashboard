@@ -76,31 +76,41 @@ function App() {
             <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                     <Routes>
-
                         {/* Login — public entry point */}
                         <Route path="/login" element={<Login />} />
 
-                        {/* Persona Landing Page — protected, shown after login */}
-                        <Route path="/" element={<ProtectedRoute><LandingPage /></ProtectedRoute>} />
+                        {/* If in Scheduler Mode, the root redirects directly to the scheduler */}
+                        {import.meta.env.VITE_APP_MODE === 'scheduler' ? (
+                            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                                <Route index element={<Navigate to="/scheduler" replace />} />
+                                <Route path="scheduler" element={<SmartSchedulerPage />} />
+                                <Route path="*" element={<Navigate to="/scheduler" replace />} />
+                            </Route>
+                        ) : (
+                            <>
+                                {/* Persona Landing Page — protected, shown after login */}
+                                <Route path="/" element={<ProtectedRoute><LandingPage /></ProtectedRoute>} />
 
-                        {/* Dashboard routes — all protected */}
-                        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                            <Route path="home" element={<HomeDashboard />} />
-                            <Route path="trends" element={<TrendsDashboard />} />
-                            <Route path="financial" element={<Navigate to="/portfolio" replace />} />
-                            <Route path="financials" element={<Navigate to="/portfolio" replace />} />
-                            <Route path="collections" element={<CollectionsDashboard />} />
-                            <Route path="portfolio" element={<PortfolioDashboard />} />
-                            <Route path="audit" element={<Navigate to="/portfolio" replace />} />
-                            <Route path="origination" element={<OriginationDashboard />} />
-                            <Route path="branch" element={<BranchDashboard />} />
-                            <Route path="centre" element={<CentreDashboard />} />
-                            <Route path="products" element={<ProductDashboard />} />
-                            <Route path="geo" element={<GeoDashboard />} />
-                            <Route path="admin" element={<AdminPanel />} />
-                            <Route path="alerts" element={<AlertsDashboard />} />
-                            <Route path="scheduler" element={<SmartSchedulerPage />} />
-                        </Route>
+                                {/* Dashboard routes — all protected */}
+                                <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                                    <Route path="home" element={<HomeDashboard />} />
+                                    <Route path="trends" element={<TrendsDashboard />} />
+                                    <Route path="financial" element={<Navigate to="/portfolio" replace />} />
+                                    <Route path="financials" element={<Navigate to="/portfolio" replace />} />
+                                    <Route path="collections" element={<CollectionsDashboard />} />
+                                    <Route path="portfolio" element={<PortfolioDashboard />} />
+                                    <Route path="audit" element={<Navigate to="/portfolio" replace />} />
+                                    <Route path="origination" element={<OriginationDashboard />} />
+                                    <Route path="branch" element={<BranchDashboard />} />
+                                    <Route path="centre" element={<CentreDashboard />} />
+                                    <Route path="products" element={<ProductDashboard />} />
+                                    <Route path="geo" element={<GeoDashboard />} />
+                                    <Route path="admin" element={<AdminPanel />} />
+                                    <Route path="alerts" element={<AlertsDashboard />} />
+                                    <Route path="scheduler" element={<SmartSchedulerPage />} />
+                                </Route>
+                            </>
+                        )}
 
                         {/* Catch-all → login */}
                         <Route path="*" element={<Navigate to="/login" replace />} />

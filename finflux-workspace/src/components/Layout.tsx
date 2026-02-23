@@ -40,12 +40,19 @@ const Layout = () => {
         { id: 'scheduler', path: '/scheduler', icon: Calendar, label: 'Smart Scheduler' },
     ];
 
+    const isSchedulerMode = import.meta.env.VITE_APP_MODE === 'scheduler';
+
     const allowedIdsStr = sessionStorage.getItem('finflux_allowed_dashboards');
     const allowedIds: string[] | null = allowedIdsStr ? JSON.parse(allowedIdsStr) : null;
 
-    const navItems = allowedIds
+    let navItems = allowedIds
         ? allNavItems.filter(item => allowedIds.includes(item.id))
         : allNavItems;
+
+    // Overwrite nav items completely if running in dedicated scheduler mode
+    if (isSchedulerMode) {
+        navItems = [{ id: 'scheduler', path: '/scheduler', icon: Calendar, label: 'Smart Scheduler' }];
+    }
 
     const currentRole = sessionStorage.getItem('finflux_role');
     const isAdmin = currentRole === 'admin';
