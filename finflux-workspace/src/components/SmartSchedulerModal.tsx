@@ -20,6 +20,7 @@ interface SmartSchedulerModalProps {
     isOpen: boolean;
     onClose: () => void;
     centreData: any; // Using any for ease, will depend on CentreDashboard data
+    onConfirm?: (slotTime: string) => void;
 }
 
 // System defaults for the mock
@@ -33,7 +34,7 @@ const INITIAL_FO_SCHEDULE: MeetingStop[] = [
     { centre: "Tumkur South C3", lat: 13.3100, lng: 77.1000, start: "15:00", end: "16:20", color: "#C53434", bg: "#F9EBEB" },
 ];
 
-const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClose, centreData }) => {
+const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClose, centreData, onConfirm }) => {
     // We will hardcode some static metadata for "Tumkur C1" to match the Streamlit demo
     const [schedule, setSchedule] = useState<MeetingStop[]>(INITIAL_FO_SCHEDULE);
 
