@@ -1,404 +1,269 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, ClipboardCheck, Banknote, CalendarCheck, AlertTriangle, ChevronDown, Check, Zap } from 'lucide-react';
-import {
-    calculateDuration,
-    calculateChainedTravel,
-    frequencyCheck,
-    generateSlots,
-    slotsNeeded,
-    insideWindow,
-    scoreSlot,
-    explainSlot,
-    recommendSlot,
-    MeetingStop,
-    timeToMins,
-    minsToTime,
-    isSlotOccupied
-} from '../lib/schedulerEngine';
+import React, { useState } from 'react';
+import { Map, Home, ChevronRight, X } from 'lucide-react';
+import SmartSchedulerModal from '../components/SmartSchedulerModal';
 
-// System defaults for the mock
-const FO_BASE = { lat: 13.3300, lng: 77.0950, name: "Tumkur Branch Office" };
-const DEFAULT_WINDOWS: [string, string][] = [["08:00", "13:00"], ["14:00", "18:00"]];
-
-// Initial mock schedule
-const INITIAL_FO_SCHEDULE: MeetingStop[] = [
-    { centre: "Tumkur North C2", lat: 13.3550, lng: 77.1150, start: "09:00", end: "10:20", color: "#C53434", bg: "#F9EBEB" },
-    { centre: "Tumkur West C1", lat: 13.3300, lng: 77.0800, start: "11:30", end: "12:50", color: "#F4A246", bg: "#FEF6EC" },
-    { centre: "Tumkur South C3", lat: 13.3100, lng: 77.1000, start: "15:00", end: "16:20", color: "#C53434", bg: "#F9EBEB" },
-];
-
-const CENTRE_DATA = {
-    name: "Tumkur C1",
-    clients: 20,
-    attendance: 0.82,
-    collection: 0.91,
-    lat: 13.3392,
-    lng: 77.1021,
-    frequency: "Every 4 weeks, on Wednesday",
-    isNew: false
+// Hardcoded DB to match the Streamlit Python app exactly
+const CENTRE_DB = {
+    "Tumkur C1": {
+        lat: 13.3392, lng: 77.1021,
+        members: 20, attendance: 0.82, collection: 0.91,
+        is_new: false,
+        city: "Tumkur", district: "Tumakuru", state: "Karnataka",
+        pincode: "572101", staff: "Vinay",
+        centre_id: "109302", ext_id: "103873",
+        activation: "23 Jan 2019", submission: "11 Dec 2022",
+        next_meeting: "21 Jan 2024", frequency: "Every 4 weeks, on Wednesday",
+        leader: "Lakshmi Devi", leader_id: "00920123", rating: 3.5,
+    },
+    "Tumkur C2 (New)": {
+        lat: 13.3500, lng: 77.1100,
+        members: 15, attendance: null, collection: null,
+        is_new: true,
+        city: "Tumkur", district: "Tumakuru", state: "Karnataka",
+        pincode: "572102", staff: "Vinay",
+        centre_id: "NEW-8291", ext_id: "PENDING",
+        activation: "Pending", submission: "22 Feb 2026",
+        next_meeting: "Unscheduled", frequency: "Every 4 weeks",
+        leader: "Pending", leader_id: "-", rating: 0.0,
+    }
 };
 
 const SmartSchedulerPage: React.FC = () => {
-    const [schedule, setSchedule] = useState<MeetingStop[]>(INITIAL_FO_SCHEDULE);
+    const [currentCentreName, setCurrentCentreName] = useState("Tumkur C1");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [meetingTime, setMeetingTime] = useState("10:00 AM");
 
-    // Engine State
-    const [recSlot, setRecSlot] = useState<string | null>(null);
-    const [recScore, setRecScore] = useState<number | null>(null);
-    const [allFeasible, setAllFeasible] = useState<{ slot: string, score: number }[]>([]);
-    const [breakdown, setBreakdown] = useState<any>(null);
-    const [insights, setInsights] = useState<string[]>([]);
-    const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-    const [manualSlot, setManualSlot] = useState<string>("09:00");
-    const [chainedTravel, setChainedTravel] = useState<{ mins: number, km: number }>({ mins: 0, km: 0 });
-    const [freqValid, setFreqValid] = useState<boolean>(true);
-    const [freqMsg, setFreqMsg] = useState<string>("");
+    const c = CENTRE_DB[currentCentreName as keyof typeof CENTRE_DB];
 
-    // UI State
-    const [showBreakdown, setShowBreakdown] = useState(false);
-    const [showAlternative, setShowAlternative] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [isSaved, setIsSaved] = useState(false);
-
-    // Mock meeting date for demo purposes (matching streamlit)
-    const MEET_DATE = new Date(2026, 1, 24); // 24 Feb 2026
-
-    const attendance = CENTRE_DATA.isNew ? 0.78 : CENTRE_DATA.attendance;
-    const collection = CENTRE_DATA.isNew ? 0.82 : CENTRE_DATA.collection;
-
-    const runRecommendation = () => {
-        const dur = calculateDuration(CENTRE_DATA.clients);
-
-        // Gap 1: Chained Travel
-        const travel = calculateChainedTravel(schedule, CENTRE_DATA.lat, CENTRE_DATA.lng, FO_BASE.lat, FO_BASE.lng);
-        setChainedTravel(travel);
-
-        // Gap 2: Frequency Check
-        const freqRes = frequencyCheck(CENTRE_DATA.frequency, MEET_DATE);
-        setFreqValid(freqRes.isValid);
-        setFreqMsg(freqRes.message);
-
-        // Run engine
-        const { duration, allFeasible: all } = recommendSlot(
-            CENTRE_DATA.clients, DEFAULT_WINDOWS, attendance, collection, travel.mins
-        );
-
-        // Filter out occupied slots
-        const available = [];
-        for (const f of all) {
-            const occ = isSlotOccupied(f.slot, duration, schedule);
-            if (!occ.occupied) {
-                available.push(f);
-            }
-        }
-
-        if (available.length > 0) {
-            const best = available[0].slot;
-            setRecSlot(best);
-            setRecScore(available[0].score);
-            setSelectedSlot(best);
-            const { breakdown: topBreakdown } = scoreSlot(best, attendance, collection, travel.mins / 60);
-            setBreakdown(topBreakdown);
-
-            if (topBreakdown) {
-                setInsights(explainSlot(best, topBreakdown, duration));
-            }
+    const handleSwitchCentre = () => {
+        if (currentCentreName === "Tumkur C1") {
+            setCurrentCentreName("Tumkur C2 (New)");
+            setMeetingTime("Unscheduled");
         } else {
-            setRecSlot(null);
-            setRecScore(null);
-            setSelectedSlot(null);
-            setBreakdown(null);
-            setInsights([]);
+            setCurrentCentreName("Tumkur C1");
+            setMeetingTime("10:00 AM");
         }
-
-        setAllFeasible(available);
     };
 
-    useEffect(() => {
-        runRecommendation();
-    }, []);
+    const handleConfirmSlot = (slotTime: string) => {
+        // Convert 24h to 12h AM/PM for display
+        const [hStr, mStr] = slotTime.split(':');
+        const h = parseInt(hStr, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        setMeetingTime(`${h12}:${mStr} ${ampm}`);
+        setIsModalOpen(false);
+    };
 
-    const duration = calculateDuration(CENTRE_DATA.clients);
-    const endTime = selectedSlot ? minsToTime(timeToMins(selectedSlot) + duration) : '—';
+    const renderStars = (rating: number) => {
+        const full = Math.floor(rating);
+        const hasHalf = rating - full >= 0.5;
+        const empty = 5 - full - (hasHalf ? 1 : 0);
+        return (
+            <span className="text-[#F4A246] text-xl tracking-widest">
+                {'★'.repeat(full)}
+                {hasHalf ? '½' : ''}
+                {'☆'.repeat(empty)}
+            </span>
+        );
+    };
 
-    // Banner colours based on validity
-    const bannerBg = freqValid ? 'bg-emerald-50' : 'bg-amber-50';
-    const bannerBorder = freqValid ? 'border-emerald-600' : 'border-amber-500';
-    const bannerText = freqValid ? 'text-emerald-700' : 'text-amber-700';
-
-    return (
-        <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-hidden">
-            <div className="bg-white border-b border-secondary-200 px-8 py-5 flex items-center justify-between shadow-sm z-10">
-                <div className="flex items-center gap-3">
-                    <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-                        <Calendar size={24} />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-secondary-900 leading-tight">Smart Meeting Scheduler</h1>
-                        <p className="text-sm text-secondary-500 flex items-center gap-2">
-                            <span className="font-medium text-slate-700">{CENTRE_DATA.name}</span>
-                            <span>•</span>
-                            <span>{MEET_DATE.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                            <span>•</span>
-                            <span>FO: Vinay</span>
-                        </p>
-                    </div>
+    // --- Modal Overlay ---
+    if (isModalOpen) {
+        return (
+            <div className="fixed inset-0 bg-slate-100 z-50 overflow-y-auto w-full h-full flex items-center justify-center py-6">
+                <div className="max-w-[1200px] w-full px-4 relative mt-[10vh]">
+                    <button
+                        onClick={() => setIsModalOpen(false)}
+                        className="absolute -top-4 -right-2 bg-white text-slate-500 hover:text-slate-800 p-2 rounded-full shadow-lg border border-slate-200 z-50 transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
+                    {/* The Modal Component itself renders the full content */}
+                    <SmartSchedulerModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        centreData={{ name: currentCentreName, clients: c.members }}
+                        onConfirm={handleConfirmSlot}
+                    />
                 </div>
             </div>
+        );
+    }
 
-            <div className="flex-1 overflow-y-auto p-8">
-                <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    {/* Sub-Header: Frequency Banner (Gap 2) */}
-                    {freqMsg && (
-                        <div className={`mx-6 mt-6 px-4 py-3 border rounded-xl flex items-center gap-3 text-sm font-medium ${bannerBg} ${bannerBorder} ${bannerText}`}>
-                            <span className="text-xl">{freqValid ? '✅' : '⚠️'}</span>
-                            <span><strong>Product Frequency:</strong> {CENTRE_DATA.frequency || '—'} • {freqMsg}</span>
+    // --- Main Layout ---
+    return (
+        <div className="min-h-screen bg-slate-50 font-['Inter',sans-serif] text-[#003366] overflow-x-hidden">
+            {/* Page Bar */}
+            <div className="bg-white border-b border-[#E2E5E8] px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-40">
+                <h1 className="text-xl font-bold text-[#003366]">Centre Profile</h1>
+                <button
+                    onClick={handleSwitchCentre}
+                    className="h-9 px-4 rounded-full border border-slate-300 text-slate-700 font-semibold text-[13px] hover:bg-slate-50 transition-colors bg-white shadow-sm"
+                >
+                    {currentCentreName === "Tumkur C1" ? "Switch to New Centre" : "Switch to Tumkur C1"}
+                </button>
+            </div>
+
+            {/* Content Area */}
+            <div className="max-w-[1000px] mx-auto p-4 flex gap-4">
+
+                {/* LEFT COLUMN: Profile Info */}
+                <div className="w-[45%] flex flex-col gap-4">
+
+                    {/* Overview Card */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(27,36,44,0.08)] p-5 relative overflow-hidden">
+                        {/* Streamlit style top accent bar */}
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-[#2196F3]"></div>
+                        <div className="text-center mb-4 mt-2">
+                            <div className="flex justify-center gap-2 mb-3">
+                                <div className="w-16 h-12 bg-[#ECEEF0] rounded flex items-center justify-center text-3xl">
+                                    <Home size={24} className="text-[#6684A3]" />
+                                </div>
+                                <div className="w-16 h-12 bg-[#ECEEF0] rounded flex items-center justify-center text-3xl">
+                                    <Map size={24} className="text-[#6684A3]" />
+                                </div>
+                            </div>
+                            <h2 className="font-bold text-[18px] text-[#003366] mb-1">{currentCentreName}</h2>
+                            <div className="inline-flex items-center gap-1.5 bg-[#E8F5E5] border border-[#D1ECCC] text-[#1A9F00] px-3 py-0.5 rounded-full text-[11px] font-bold">
+                                <div className="w-1.5 h-1.5 bg-[#1A9F00] rounded-full"></div>
+                                ACTIVE
+                            </div>
                         </div>
-                    )}
 
-                    {/* Quick Stats Strip */}
-                    <div className="flex flex-wrap gap-3 mx-6 mt-4">
-                        <StatChip icon={<Users size={14} />} label="Members" value={CENTRE_DATA.clients} />
-                        <StatChip
-                            icon={<ClipboardCheck size={14} />}
-                            label="Attendance"
-                            value={`${Math.floor((CENTRE_DATA.isNew ? 0.78 : CENTRE_DATA.attendance) * 100)}%`}
-                            highlight={(!CENTRE_DATA.isNew && CENTRE_DATA.attendance >= 0.75) ? 'good' : 'warn'}
-                        />
-                        <StatChip
-                            icon={<Banknote size={14} />}
-                            label="Collection"
-                            value={`${Math.floor((CENTRE_DATA.isNew ? 0.82 : CENTRE_DATA.collection) * 100)}%`}
-                            highlight={(!CENTRE_DATA.isNew && CENTRE_DATA.collection >= 0.80) ? 'good' : 'warn'}
-                        />
-                        <StatChip icon={<Clock size={14} />} label="Duration" value={`${duration} min`} />
-                        <div className="flex-1 min-w-[140px] bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 flex flex-col justify-center">
-                            <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider flex items-center gap-1">
-                                <MapPin size={10} /> Travel (Chained)
-                            </div>
-                            <div className="text-lg font-bold text-indigo-900 tracking-tight mt-0.5">
-                                {chainedTravel.mins} min <span className="text-sm font-medium text-indigo-600">({chainedTravel.km} km)</span>
-                            </div>
+                        <div className="flex flex-col gap-3.5 text-[13.5px] mt-6">
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">Staff Assigned</span><span className="text-[#2196F3] font-bold cursor-pointer">{c.staff}</span></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">Center ID</span><span className="text-[#003366] font-medium">{c.centre_id}</span></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">External ID</span><span className="text-[#003366] font-medium">{c.ext_id}</span></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">Activation Date</span><span className="text-[#003366] font-medium">{c.activation}</span></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">Submission Date</span><span className="text-[#003366] font-medium">{c.submission}</span></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">City</span><span className="text-[#003366] font-medium">{c.city}</span></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">District</span><span className="text-[#003366] font-medium">{c.district}</span></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2"><span className="font-semibold text-[#6684A3]">State</span><span className="text-[#003366] font-medium">{c.state}</span></div>
+                            <div className="flex justify-between"><span className="font-semibold text-[#6684A3]">Pincode</span><span className="text-[#003366] font-medium">{c.pincode}</span></div>
                         </div>
                     </div>
 
-                    {/* Main Content Area: 2 Columns */}
-                    <div className="flex flex-1 mt-6 border-t border-slate-100">
-                        {/* LEFT COLUMN: ACTION ZONE */}
-                        <div className="flex-1 overflow-y-auto px-8 py-8 border-r border-slate-200">
-                            {isSaved ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center animate-in zoom-in-50 duration-300 py-12">
-                                    <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                                        <Check className="w-12 h-12" />
-                                    </div>
-                                    <h3 className="text-3xl font-extrabold text-emerald-900 mb-3 tracking-tight">Meeting Scheduled!</h3>
-                                    <p className="text-emerald-700 text-lg font-medium">
-                                        {CENTRE_DATA.name} is booked for {selectedSlot} - {endTime}
-                                    </p>
-                                    <button
-                                        onClick={() => setIsSaved(false)}
-                                        className="mt-8 px-8 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition"
-                                    >
-                                        Book Another
-                                    </button>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-sm font-extrabold text-slate-500 uppercase tracking-widest">AI Optimized Schedule</h3>
-                                    </div>
+                    {/* Meeting Details Card */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(27,36,44,0.08)] p-5 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-[#2196F3]"></div>
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#F5F6F7] mt-1">
+                            <h3 className="font-bold text-[16px] text-[#003366]">Meeting Details</h3>
+                            <button className="text-[#2196F3] font-bold text-[13px] hover:underline">Edit</button>
+                        </div>
+                        <div className="flex flex-col gap-4 text-[13.5px]">
+                            <div className="flex justify-between"><span className="font-semibold text-[#6684A3]">Next Meeting Date</span><span className="text-[#003366] font-medium">{c.next_meeting}</span></div>
+                            <div className="flex justify-between"><span className="font-semibold text-[#6684A3]">Meeting Frequency</span><span className="text-[#003366] font-medium text-right max-w-[150px] leading-tight">{c.frequency}</span></div>
+                        </div>
+                    </div>
 
-                                    {recSlot ? (
-                                        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-8 relative shadow-sm">
-                                            <div className="absolute top-4 right-4 bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-                                                <Zap size={12} /> AI Recommended
-                                            </div>
+                    {/* Meeting Time Action Row */}
+                    <div
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-[#E9F4FE] border border-[#D3EAFD] rounded-xl p-4 cursor-pointer hover:shadow-[0_4px_12px_rgba(33,150,243,0.15)] transition-all flex items-center justify-between group"
+                    >
+                        <div>
+                            <div className="text-[11px] font-bold text-[#6684A3] uppercase tracking-wider mb-1">📅 Meeting Time</div>
+                            <div className="text-[20px] font-extrabold text-[#2196F3] leading-none">{meetingTime}</div>
+                        </div>
+                        <div className="bg-[#2196F3] text-white px-4 py-2 rounded-full text-[13px] font-bold shadow-sm whitespace-nowrap group-hover:bg-[#1976D2] transition-colors flex items-center gap-1">
+                            Get AI Slot <ChevronRight size={16} />
+                        </div>
+                    </div>
 
-                                            <div className="text-indigo-900/50 font-semibold mb-2">
-                                                {MEET_DATE.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                            </div>
-                                            <div className="flex items-baseline gap-3 mb-8">
-                                                <div className="text-6xl font-extrabold text-indigo-900 tracking-tighter cursor-pointer">
-                                                    {recSlot}
-                                                </div>
-                                                <div className="text-3xl text-indigo-400 font-medium">to {minsToTime(timeToMins(recSlot) + duration)}</div>
-                                            </div>
-
-                                            <div className="flex gap-4">
-                                                <button
-                                                    onClick={() => {
-                                                        setIsSaving(true);
-                                                        setTimeout(() => setIsSaving(false), 300);
-                                                        setIsSaved(true);
-                                                    }}
-                                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-[0.98] text-lg"
-                                                >
-                                                    {isSaving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CalendarCheck className="w-6 h-6" />}
-                                                    Confirm This Slot
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowAlternative(!showAlternative)}
-                                                    className="px-8 py-4 border-2 border-indigo-200 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 hover:border-indigo-300 transition-colors text-lg"
-                                                >
-                                                    Reschedule
-                                                </button>
-                                            </div>
-
-                                            {/* Breakdowns */}
-                                            <div className="mt-8 border-t border-indigo-100 pt-6">
-                                                <button
-                                                    onClick={() => setShowBreakdown(!showBreakdown)}
-                                                    className="flex items-center justify-between w-full text-left font-bold text-indigo-900 hover:text-indigo-700"
-                                                >
-                                                    <span className="flex items-center gap-2">
-                                                        <AlertTriangle size={18} className="text-indigo-500" />
-                                                        Why did AI pick this time? ({recScore?.toFixed(2)} Score)
-                                                    </span>
-                                                    <ChevronDown size={20} className={`transition-transform duration-300 ${showBreakdown ? 'rotate-180' : ''}`} />
-                                                </button>
-
-                                                {showBreakdown && insights.length > 0 && (
-                                                    <div className="mt-5 space-y-4 pl-7 border-l-4 border-indigo-200 ml-2 animate-in slide-in-from-top-2 duration-300">
-                                                        {insights.map((insight, idx) => (
-                                                            <p key={idx} className="text-slate-700 leading-relaxed text-[15px]"
-                                                                dangerouslySetInnerHTML={{ __html: insight }} />
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-12 text-center">
-                                            <div className="text-rose-600 mb-6 flex justify-center"><AlertTriangle size={64} className="opacity-80" /></div>
-                                            <h3 className="text-2xl font-bold text-rose-900 mb-3">No Feasible Slots Available</h3>
-                                            <p className="text-rose-700 text-lg">The field officer's schedule is fully booked or there are no slots that fit within the availability windows that do not conflict with existing meetings.</p>
-                                        </div>
-                                    )}
-
-                                    {/* Alternative Selection */}
-                                    {showAlternative && (
-                                        <div className="mt-10 animate-in fade-in slide-in-from-top-4 duration-300">
-                                            <h4 className="text-sm font-extrabold text-slate-500 uppercase tracking-widest mb-5 border-b pb-3">Alternative Slots</h4>
-                                            <div className="grid grid-cols-3 gap-4">
-                                                {allFeasible.slice(1, 10).map((f) => (
-                                                    <button
-                                                        key={f.slot}
-                                                        onClick={() => {
-                                                            const occ = isSlotOccupied(f.slot, duration, schedule);
-                                                            if (!occ.occupied) {
-                                                                setRecSlot(f.slot);
-                                                                setSelectedSlot(f.slot);
-                                                                setRecScore(f.score);
-                                                                const { breakdown: newBrk } = scoreSlot(f.slot, attendance, collection, chainedTravel.mins / 60);
-                                                                setBreakdown(newBrk);
-                                                                if (newBrk) setInsights(explainSlot(f.slot, newBrk, duration));
-                                                                setShowAlternative(false);
-                                                            }
-                                                        }}
-                                                        className="px-6 py-4 border-2 border-slate-200 rounded-xl flex flex-col items-center hover:border-indigo-400 hover:bg-indigo-50 transition-colors group shadow-sm hover:shadow"
-                                                    >
-                                                        <span className="font-extrabold text-xl text-slate-800 group-hover:text-indigo-700">{f.slot}</span>
-                                                        <span className="text-sm text-slate-500 font-semibold mt-1">Score: {f.score.toFixed(2)}</span>
-                                                    </button>
-                                                ))}
-                                                <div className="col-span-3 mt-4 flex items-center justify-between bg-slate-100 p-5 rounded-xl border border-slate-200">
-                                                    <span className="font-bold text-slate-700">Manual Override:</span>
-                                                    <div className="flex gap-3">
-                                                        <select
-                                                            value={manualSlot}
-                                                            onChange={(e) => setManualSlot(e.target.value)}
-                                                            className="bg-white border-2 border-slate-300 rounded-lg px-4 py-2 font-bold focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                                                        >
-                                                            {generateSlots().map(s => <option key={s} value={s}>{s}</option>)}
-                                                        </select>
-                                                        <button
-                                                            onClick={() => {
-                                                                const occ = isSlotOccupied(manualSlot, duration, schedule);
-                                                                if (occ.occupied) {
-                                                                    alert(`Slot conflicts with ${occ.centreName}`);
-                                                                    return;
-                                                                }
-                                                                setRecSlot(manualSlot);
-                                                                setSelectedSlot(manualSlot);
-                                                                setRecScore(0);
-                                                                const { breakdown: newBrk } = scoreSlot(manualSlot, attendance, collection, chainedTravel.mins / 60);
-                                                                setBreakdown(newBrk);
-                                                                if (newBrk) setInsights(explainSlot(manualSlot, newBrk, duration));
-                                                                setShowAlternative(false);
-                                                            }}
-                                                            className="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-slate-700 transition"
-                                                        >
-                                                            Select
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                    {/* Performance Card */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(27,36,44,0.08)] p-5 relative overflow-hidden mb-8">
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-[#2196F3]"></div>
+                        <h3 className="font-bold text-[16px] text-[#003366] mb-4 pb-3 border-b border-[#F5F6F7] mt-1">Centre Leader</h3>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-12 h-12 rounded-full bg-[#D3EAFD] text-[#2196F3] flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">LD</div>
+                            <div>
+                                <div className="font-bold text-[16px] text-[#003366] leading-tight mb-0.5">{c.leader}</div>
+                                <div className="text-[13px] text-[#6684A3] font-medium">ID: {c.leader_id}</div>
+                            </div>
                         </div>
 
-                        {/* RIGHT COLUMN: CONTEXT (Map Placeholder & Schedule) */}
-                        <div className="w-[38%] bg-slate-50 p-8 flex flex-col border-l border-white shadow-[inset_1px_0_0_rgba(0,0,0,0.05)]">
-                            <h3 className="text-sm font-extrabold text-slate-500 uppercase tracking-widest mb-5">Today's Operating Picture</h3>
+                        <h3 className="font-bold text-[16px] text-[#003366] mb-4 pb-3 border-b border-[#F5F6F7]">Performance</h3>
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="text-4xl font-extrabold text-[#003366] tracking-tight">{c.rating.toFixed(1)}</div>
+                            <div className="-mt-1">{renderStars(c.rating)}</div>
+                        </div>
 
-                            <div className="flex-1 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
-                                {/* Map Placeholder */}
-                                <div className="h-48 bg-indigo-50 relative overflow-hidden flex items-center justify-center border-b border-slate-100 shrink-0">
-                                    <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)', backgroundSize: '16px 16px', opacity: 0.6 }}></div>
-                                    <div className="z-10 text-center bg-white/80 backdrop-blur px-6 py-3 rounded-2xl border border-white shadow-sm">
-                                        <MapPin size={24} className="text-indigo-400 mx-auto mb-1" />
-                                        <p className="text-xs font-bold text-indigo-900 uppercase tracking-widest">Routing Engine Preview</p>
-                                    </div>
-                                </div>
-
-                                {/* Schedule Summary */}
-                                <div className="p-6 overflow-y-auto flex-1 bg-white">
-                                    <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                                        {schedule.map((s, i) => (
-                                            <div key={s.centre} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                                {/* <div className="flex items-center justify-center w-5 h-5 rounded-full border-4 border-white bg-slate-300 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div> */}
-                                                <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.25rem)] p-3 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
-                                                    <div className="font-bold text-slate-800 text-sm mb-1">{s.start} - {s.end}</div>
-                                                    <div className="text-xs font-semibold text-slate-500">{s.centre}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        {selectedSlot && !isSaved && (
-                                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active mt-6">
-                                                <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.25rem)] p-4 rounded-xl border-2 border-indigo-400 bg-indigo-50 shadow-md transform -translate-y-1">
-                                                    <div className="font-extrabold text-indigo-900 text-sm mb-1">{selectedSlot} - {endTime}</div>
-                                                    <div className="text-xs font-bold text-indigo-600 flex items-center gap-1">
-                                                        <Zap size={10} /> {CENTRE_DATA.name} (Pending)
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                        <div className="flex flex-col gap-3.5 text-[13.5px]">
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-[#6684A3]">Attendance Rate</span>
+                                <span className="text-[#1A9F00] font-extrabold text-[15px]">{c.attendance ? `${Math.round(c.attendance * 100)}%` : 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-[#6684A3]">Collection Rate</span>
+                                <span className="text-[#1A9F00] font-extrabold text-[15px]">{c.collection ? `${Math.round(c.collection * 100)}%` : 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between border-t border-slate-100 pt-3 mt-1">
+                                <span className="font-bold text-[#003366] text-[15px]">Total Members</span>
+                                <span className="font-extrabold text-[16px] text-[#003366]">{c.members}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    );
-};
 
-// Helper component
-const StatChip = ({ icon, label, value, highlight }: { icon: React.ReactNode, label: string, value: string | number, highlight?: 'good' | 'warn' }) => {
-    let valColor = 'text-slate-800';
-    if (highlight === 'good') valColor = 'text-emerald-700';
-    if (highlight === 'warn') valColor = 'text-rose-600';
+                {/* RIGHT COLUMN: Groups */}
+                <div className="w-[55%]">
+                    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(27,36,44,0.08)] mt-0 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-[#2196F3]"></div>
+                        <div className="flex border-b border-[#E2E5E8] px-2 pt-1">
+                            <button className="px-6 py-4 border-b-[3px] border-[#2196F3] text-[#003366] font-bold text-[15px]">Groups</button>
+                            <button className="px-6 py-4 border-b-[3px] border-transparent text-[#6684A3] font-bold text-[15px] hover:text-[#003366] transition-colors">Notes</button>
+                        </div>
 
-    return (
-        <div className="flex-1 min-w-[120px] bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 flex flex-col justify-center">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
-                {icon} {label}
-            </div>
-            <div className={`text-xl font-extrabold tracking-tight mt-0.5 ${valColor}`}>
-                {value}
+                        <div className="flex flex-col pb-2">
+                            {/* Group Item */}
+                            <div className="flex items-center justify-between py-4 px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 rounded-full bg-[#E2E5E8] text-[#003366] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T1</div>
+                                    <div>
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Tumkur C1G1</div>
+                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489260</div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                            </div>
+
+                            <div className="flex items-center justify-between py-4 px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 rounded-full bg-[#D1ECCC] text-[#1A9F00] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">RD</div>
+                                    <div>
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Radhika Devi</div>
+                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489261</div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                            </div>
+
+                            <div className="flex items-center justify-between py-4 px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 rounded-full bg-[#D3EAFD] text-[#2196F3] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T2</div>
+                                    <div>
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Tumkur C1G2</div>
+                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489262</div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                            </div>
+
+                            <div className="flex items-center justify-between py-4 px-6 hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 rounded-full bg-[#FDECDA] text-[#F4A246] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T3</div>
+                                    <div>
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Tumkur C1G3</div>
+                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489263</div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );
