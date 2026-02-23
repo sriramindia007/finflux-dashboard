@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Building2, Users, Banknote, TrendingUp, MapPin, UserCheck, ClipboardCheck, Target, AlertTriangle, BadgePercent, ShieldAlert, Download, Camera, Lock } from 'lucide-react';
 import { saveFile, exportToPDF, exportToPPT } from '../lib/utils';
-import { useRef } from 'react';
 import KPICard from '../components/KPICard';
 import { ALL_STATES_DATA, getGlobalStats } from '../data/geoDataComplete';
 import { COMPANY_METRICS } from '../data/mfiData';

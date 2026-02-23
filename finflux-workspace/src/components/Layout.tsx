@@ -1,5 +1,5 @@
 import { useNavigate, useLocation, Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Map, TrendingUp, Menu, Building2, Package, FileText, Users, ShieldAlert, Banknote, LogOut, Shield, Bell, X } from 'lucide-react';
+import { LayoutDashboard, Map, TrendingUp, Menu, Building2, Package, FileText, Users, ShieldAlert, Banknote, LogOut, Shield, Bell, X, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState, useRef, useEffect } from 'react';
 
@@ -37,6 +37,7 @@ const Layout = () => {
         { id: 'centre', path: '/centre', icon: Users, label: 'Centre & Workforce' },
         { id: 'products', path: '/products', icon: Package, label: 'Product Analytics' },
         { id: 'geo', path: '/geo', icon: Map, label: 'Geo Drill' },
+        { id: 'scheduler', path: '/scheduler', icon: Calendar, label: 'Smart Scheduler' },
     ];
 
     const allowedIdsStr = sessionStorage.getItem('finflux_allowed_dashboards');

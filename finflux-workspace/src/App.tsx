@@ -18,6 +18,7 @@ const CentreDashboard = lazy(() => import('./pages/CentreDashboard'));
 const CollectionsDashboard = lazy(() => import('./pages/CollectionsDashboard'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const AlertsDashboard = lazy(() => import('./pages/AlertsDashboard'));
+const SmartSchedulerPage = lazy(() => import('./pages/SmartSchedulerPage'));
 // FinancialDashboard removed — content distributed to Portfolio (Vintage/Regulatory tabs) & Executive Dashboard
 
 // Simple Loading Component
@@ -98,6 +99,7 @@ function App() {
                             <Route path="geo" element={<GeoDashboard />} />
                             <Route path="admin" element={<AdminPanel />} />
                             <Route path="alerts" element={<AlertsDashboard />} />
+                            <Route path="scheduler" element={<SmartSchedulerPage />} />
                         </Route>
 
                         {/* Catch-all → login */}
