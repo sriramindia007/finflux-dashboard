@@ -81,11 +81,9 @@ function App() {
 
                         {/* If in Scheduler Mode, the root redirects directly to the scheduler */}
                         {(import.meta.env.VITE_APP_MODE === 'scheduler' || window.location.hostname === 'finflux.vercel.app' || window.location.hostname.includes('maxp')) ? (
-                            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                                <Route index element={<Navigate to="/scheduler" replace />} />
-                                <Route path="scheduler" element={<SmartSchedulerPage />} />
-                                <Route path="*" element={<Navigate to="/scheduler" replace />} />
-                            </Route>
+                            <>
+                                <Route path="*" element={<SmartSchedulerPage />} />
+                            </>
                         ) : (
                             <>
                                 {/* Persona Landing Page — protected, shown after login */}
