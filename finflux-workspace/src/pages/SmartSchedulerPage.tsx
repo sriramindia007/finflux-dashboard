@@ -62,9 +62,10 @@ const SmartSchedulerPage: React.FC = () => {
     // Mock meeting date for demo purposes (matching streamlit)
     const MEET_DATE = new Date(2026, 1, 24); // 24 Feb 2026
 
+    const attendance = CENTRE_DATA.isNew ? 0.78 : CENTRE_DATA.attendance;
+    const collection = CENTRE_DATA.isNew ? 0.82 : CENTRE_DATA.collection;
+
     const runRecommendation = () => {
-        const attendance = CENTRE_DATA.isNew ? 0.78 : CENTRE_DATA.attendance;
-        const collection = CENTRE_DATA.isNew ? 0.82 : CENTRE_DATA.collection;
         const dur = calculateDuration(CENTRE_DATA.clients);
 
         // Gap 1: Chained Travel

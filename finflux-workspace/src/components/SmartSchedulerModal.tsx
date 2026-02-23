@@ -69,9 +69,10 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     // Mock meeting date for demo purposes (matching streamlit)
     const MEET_DATE = new Date(2026, 1, 24); // 24 Feb 2026
 
+    const attendance = isNew ? 0.78 : cAtt;
+    const collection = isNew ? 0.82 : cCol;
+
     const runRecommendation = () => {
-        const attendance = isNew ? 0.78 : cAtt;
-        const collection = isNew ? 0.82 : cCol;
         const dur = calculateDuration(cMembers);
 
         // Gap 1: Chained Travel
