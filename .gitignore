@@ -1,0 +1,11 @@
+finflux-workspace/node_modules/
+finflux-workspace/dist/
+finflux-workspace/.vite/
+finflux-workspace/*.zip
+finflux-workspace/backups/
+finflux-workspace/data_exports/
+finflux-workspace/*.pptx
+finflux-workspace/*.pdf
+finflux-workspace/src_backup_*.zip
+finflux-workspace/finflux_*.zip
+finflux-workspace/generic-*.zip
