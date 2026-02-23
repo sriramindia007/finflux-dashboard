@@ -40,7 +40,7 @@ const Layout = () => {
         { id: 'scheduler', path: '/scheduler', icon: Calendar, label: 'Smart Scheduler' },
     ];
 
-    const isSchedulerMode = import.meta.env.VITE_APP_MODE === 'scheduler';
+    const isSchedulerMode = import.meta.env.VITE_APP_MODE === 'scheduler' || window.location.hostname === 'finflux.vercel.app' || window.location.hostname.includes('maxp');
 
     const allowedIdsStr = sessionStorage.getItem('finflux_allowed_dashboards');
     const allowedIds: string[] | null = allowedIdsStr ? JSON.parse(allowedIdsStr) : null;
