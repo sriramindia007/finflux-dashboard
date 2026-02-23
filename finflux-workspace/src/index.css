@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 90%; /* Scales down entire UI to ~14.4px base */
+  }
+  body {
+    @apply bg-secondary-50 text-secondary-900 font-sans antialiased;
+  }
+}

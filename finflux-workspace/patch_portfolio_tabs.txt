@@ -1,0 +1,183 @@
+
+            {/* TAB 3: VINTAGE COHORT ANALYSIS */}
+            {activeTab === 'vintage' && (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-xl border border-secondary-200 shadow-sm p-5">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 className="text-sm font-bold text-secondary-800 uppercase tracking-wider">Loan Vintage Analysis — PAR by Disbursement Cohort</h3>
+                                <p className="text-xs text-secondary-400 mt-1 mb-4">
+                                    PAR at 3, 6, and 12 months post-disbursement. Source: FINFLUX repayment aging by cohort.
+                                    Cycle 2+ borrowers consistently show lower PAR due to repeat-borrower screening.
+                                </p>
+                            </div>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0 ml-2">LMS</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-secondary-50 border-b border-secondary-200">
+                                    <tr>
+                                        {['Cohort', 'Loan Cycle', 'Active Loans', 'Closed', 'PAR @ 3M', 'PAR @ 6M', 'PAR @ 12M', 'Write-off (Cr)'].map(h => (
+                                            <th key={h} className="py-2.5 px-3 text-xs font-semibold text-secondary-500 whitespace-nowrap">{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-secondary-100">
+                                    {VINTAGE_DATA.map((row, i) => {
+                                        const cycleColors: Record<number, string> = {
+                                            1: 'bg-blue-100 text-blue-700',
+                                            2: 'bg-indigo-100 text-indigo-700',
+                                            3: 'bg-purple-100 text-purple-700',
+                                            4: 'bg-fuchsia-100 text-fuchsia-700'
+                                        };
+                                        return (
+                                            <tr key={i} className="hover:bg-secondary-50">
+                                                <td className="py-2.5 px-3 text-xs font-semibold text-secondary-800">{row.disbursementMonth} '25</td>
+                                                <td className="py-2.5 px-3 text-xs">
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${cycleColors[row.loanCycle] || 'bg-gray-100 text-gray-700'}`}>
+                                                        Cycle {row.loanCycle}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2.5 px-3 text-xs text-secondary-700">{row.loansActive.toLocaleString()}</td>
+                                                <td className="py-2.5 px-3 text-xs text-secondary-500">{row.loansClosed.toLocaleString()}</td>
+                                                <td className="py-2.5 px-3 text-xs font-mono">
+                                                    <span className={row.par30AtM3 > 3 ? 'text-rose-600 font-bold' : 'text-secondary-600'}>{row.par30AtM3.toFixed(2)}%</span>
+                                                </td>
+                                                <td className="py-2.5 px-3 text-xs font-mono">
+                                                    <span className={row.par30AtM6 > 3 ? 'text-rose-600 font-bold' : 'text-secondary-600'}>{row.par30AtM6.toFixed(2)}%</span>
+                                                </td>
+                                                <td className="py-2.5 px-3 text-xs font-mono">
+                                                    <span className={row.par30AtM12 > 3 ? 'text-rose-600 font-bold' : 'text-secondary-600'}>{row.par30AtM12.toFixed(2)}%</span>
+                                                </td>
+                                                <td className="py-2.5 px-3 text-xs font-mono text-secondary-600">₹{row.writeOff.toFixed(2)}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p className="text-[10px] text-secondary-400 mt-4">
+                            Insight: Cycle 2+ borrowers show lower PAR — repeat borrower screening is effective. Higher early PAR in Cycle 1 is normal for first-time rural credit borrowers.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 4: REGULATORY COMPLIANCE */}
+            {activeTab === 'regulatory' && (
+                <div className="space-y-6">
+                    <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                        <span className="text-emerald-600 text-lg shrink-0 mt-0.5">✓</span>
+                        <div>
+                            <div className="text-sm font-bold text-emerald-800">All starred metrics are sourced directly from FINFLUX loan data</div>
+                            <div className="text-xs text-emerald-700 mt-1">
+                                QA%, IRR, Household Income — from loan contract values and borrower KYC in FINFLUX.
+                                Multi-lender exposure from CERSAI/bureau integration.
+                                <span className="font-semibold text-amber-700"> CRAR and SRO membership require external data (marked EXT).</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Compliance Checklist */}
+                        <div className="bg-white rounded-xl border border-secondary-200 shadow-sm p-5">
+                            <h3 className="text-sm font-bold text-secondary-800 uppercase tracking-wider mb-4">RBI / MFIN Regulatory Compliance</h3>
+                            <div className="space-y-2">
+                                {([
+                                    { metric: 'Qualifying Assets Ratio', actual: 92.4, norm: '≥85% (RBI)', lms: true, ok: true, unit: '%' },
+                                    { metric: 'Household Income ≤ ₹3L', actual: 94.1, norm: '≥90% (RBI)', lms: true, ok: true, unit: '%' },
+                                    { metric: 'Effective Interest Rate (IRR)', actual: CURRENT_FINANCIALS.yieldOnPortfolio, norm: '≤24% (RBI cap)', lms: true, ok: CURRENT_FINANCIALS.yieldOnPortfolio <= 24, unit: '%' },
+                                    { metric: 'Max Loan per Borrower', actual: 1.8, norm: '≤₹3 Lakh', lms: true, ok: true, unit: 'L avg' },
+                                    { metric: 'Multi-Lender Exposure (3+ MFIs)', actual: 16.2, norm: '<20% (MFIN)', lms: true, ok: true, unit: '%' },
+                                    { metric: 'CERSAI Registration', actual: 96.2, norm: '≥95%', lms: true, ok: true, unit: '%' },
+                                    { metric: 'SRO Membership (MFIN)', actual: 100, norm: 'Mandatory', lms: false, ok: true, unit: '%' },
+                                    { metric: 'CRAR (Capital Adequacy)', actual: 18.5, norm: '≥15% (RBI)', lms: false, ok: true, unit: '%' },
+                                ] as const).map((row, i) => (
+                                    <div key={i} className="flex items-center justify-between py-2.5 border-b border-secondary-50 last:border-0">
+                                        <div>
+                                            <div className="text-xs font-semibold text-secondary-800 flex items-center gap-1.5">
+                                                {row.metric}
+                                                {row.lms
+                                                    ? <span className="text-[7px] font-bold px-1 py-0.5 rounded bg-emerald-100 text-emerald-700">LMS</span>
+                                                    : <span className="text-[7px] font-bold px-1 py-0.5 rounded bg-amber-100 text-amber-700">EXT</span>
+                                                }
+                                            </div>
+                                            <div className="text-[10px] text-secondary-400">{row.norm}</div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-bold text-secondary-700">{row.actual.toFixed(1)}{row.unit}</span>
+                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${row.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                                {row.ok ? '✓ Compliant' : '! Breach'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* State-wise Regulatory Table */}
+                        <div className="bg-white rounded-xl border border-secondary-200 shadow-sm p-5">
+                            <h3 className="text-sm font-bold text-secondary-800 uppercase tracking-wider mb-4">State-wise Regulatory Summary</h3>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-secondary-50 border-b border-secondary-200">
+                                        <tr>
+                                            {['State', 'QA%', 'HH Inc%', 'IRR%', 'Multi-L%', 'Coll.%'].map(h => (
+                                                <th key={h} className="py-2 px-2 text-[10px] font-semibold text-secondary-500 text-right first:text-left">{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-secondary-100">
+                                        {STATE_FINANCIALS.sort((a, b) => b.glp - a.glp).map((row, i) => (
+                                            <tr key={i} className="hover:bg-secondary-50">
+                                                <td className="py-1.5 px-2 text-xs font-semibold text-secondary-800">{row.name}</td>
+                                                <td className="py-1.5 px-2 text-xs text-right font-mono font-bold" style={{color: row.qualifyingAssetPct >= 85 ? '#059669' : '#dc2626'}}>{row.qualifyingAssetPct.toFixed(1)}</td>
+                                                <td className="py-1.5 px-2 text-xs text-right font-mono font-bold" style={{color: row.householdIncomePct >= 90 ? '#059669' : '#d97706'}}>{row.householdIncomePct.toFixed(1)}</td>
+                                                <td className="py-1.5 px-2 text-xs text-right font-mono font-bold" style={{color: row.irrPct <= 24 ? '#059669' : '#dc2626'}}>{row.irrPct.toFixed(1)}</td>
+                                                <td className="py-1.5 px-2 text-xs text-right font-mono font-bold" style={{color: row.multiLenderPct < 20 ? '#059669' : '#dc2626'}}>{row.multiLenderPct.toFixed(1)}</td>
+                                                <td className="py-1.5 px-2 text-xs text-right font-mono font-bold" style={{color: row.collectionEfficiency >= 98 ? '#059669' : row.collectionEfficiency >= 96 ? '#d97706' : '#dc2626'}}>{row.collectionEfficiency.toFixed(1)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Industry Benchmarks */}
+                        <div className="lg:col-span-2 bg-white rounded-xl border border-secondary-200 shadow-sm p-5">
+                            <h3 className="text-sm font-bold text-secondary-800 uppercase tracking-wider mb-1">Industry Benchmarks — MFIN 2024</h3>
+                            <p className="text-xs text-secondary-400 mb-4">LMS-computable metrics only. NIM/ROA/CRAR excluded — require accounting integration.</p>
+                            <div className="space-y-3">
+                                {INDUSTRY_BENCHMARKS
+                                    .filter(r => ['Collection Efficiency', 'PAR 30', 'PAR 90', 'Cost of Funds'].includes(r.metric))
+                                    .map((row, i) => {
+                                        const isGood = row.better === 'higher' ? row.ourValue >= row.topQuartile : row.ourValue <= row.topQuartile;
+                                        const isAvg = row.better === 'higher' ? row.ourValue >= row.industryAvg : row.ourValue <= row.industryAvg;
+                                        const pct = Math.min(100, row.better === 'higher'
+                                            ? (row.ourValue / (row.topQuartile * 1.1)) * 100
+                                            : (row.topQuartile / (row.ourValue * 1.1)) * 100);
+                                        const bColor = isGood ? '#10b981' : isAvg ? '#f59e0b' : '#ef4444';
+                                        const lClass = isGood ? 'bg-emerald-100 text-emerald-700' : isAvg ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
+                                        return (
+                                            <div key={i} className="grid grid-cols-12 items-center gap-4 p-3 rounded-lg hover:bg-secondary-50">
+                                                <div className="col-span-3 text-sm font-semibold text-secondary-700">{row.metric}</div>
+                                                <div className="col-span-2 text-xs text-secondary-400 text-right">
+                                                    <div>Ind: <strong>{row.industryAvg}{row.unit}</strong></div>
+                                                    <div>Top: <strong className="text-indigo-600">{row.topQuartile}{row.unit}</strong></div>
+                                                </div>
+                                                <div className="col-span-5 relative h-3 bg-secondary-100 rounded-full overflow-hidden">
+                                                    <div style={{width: pct + '%', backgroundColor: bColor, height: '100%', borderRadius: '9999px'}} />
+                                                </div>
+                                                <div className="col-span-2 flex items-center gap-2 justify-end">
+                                                    <span style={{color: bColor}} className="text-sm font-bold">{row.ourValue.toFixed(1)}{row.unit}</span>
+                                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${lClass}`}>{isGood ? 'TOP' : isAvg ? 'AVG' : 'LAG'}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
