@@ -267,12 +267,6 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                                 {isSaving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CalendarCheck className="w-5 h-5" />}
                                                 Confirm This Slot
                                             </button>
-                                            <button
-                                                onClick={() => setShowAlternative(!showAlternative)}
-                                                className="px-6 py-3.5 border-2 border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors"
-                                            >
-                                                Reschedule
-                                            </button>
                                         </div>
 
                                         {/* Breakdowns */}
@@ -307,74 +301,70 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                 )}
 
                                 {/* Alternative Selection Grid */}
-                                {showAlternative && (
-                                    <div className="mt-8 animate-in fade-in duration-300">
-                                        <div className="mb-4">
-                                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Select a Time Slot</h4>
-                                            <div className="text-xs text-slate-500 flex items-center gap-3">
-                                                <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-rose-200 border border-rose-300"></div> Occupied by another centre</span>
-                                                <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> AI Pick</span>
-                                                <span>Click any free slot to select</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-5 gap-2">
-                                            {generateSlots().map((slot) => {
-                                                const occ = isSlotOccupied(slot, duration, schedule);
-                                                const isRec = slot === recSlot;
-                                                const isSel = slot === selectedSlot;
-
-                                                if (occ.occupied) {
-                                                    return (
-                                                        <div key={slot} className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-rose-100 bg-rose-50 text-rose-700 opacity-60 cursor-not-allowed h-16">
-                                                            <span className="font-bold text-sm">{slot}</span>
-                                                            <span className="text-[10px] truncate w-full text-center mt-0.5">{occ.centreName}</span>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                let btnClass = "flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all h-16 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50";
-                                                let textClass = "font-bold text-sm text-slate-700";
-                                                let iconNode = null;
-
-                                                if (isRec) {
-                                                    btnClass = "flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all h-16 cursor-pointer bg-indigo-600 border-indigo-600 shadow-md";
-                                                    textClass = "font-bold text-sm text-white flex items-center gap-1";
-                                                    iconNode = "⭐";
-                                                } else if (isSel) {
-                                                    btnClass = "flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all h-16 cursor-pointer bg-indigo-50 border-indigo-500";
-                                                    textClass = "font-bold text-sm text-indigo-700 flex items-center gap-1";
-                                                    iconNode = "✓";
-                                                }
-
-                                                return (
-                                                    <button
-                                                        key={slot}
-                                                        onClick={() => {
-                                                            setRecSlot(slot);
-                                                            setSelectedSlot(slot);
-
-                                                            // Find if this is one of our explicitly scored feasible slots to show the score
-                                                            const feasibleMatch = allFeasible.find(f => f.slot === slot);
-                                                            setRecScore(feasibleMatch ? feasibleMatch.score : 0);
-
-                                                            const { breakdown: newBrk } = scoreSlot(slot, attendance, collection, chainedTravel.mins / 60, isNew);
-                                                            setBreakdown(newBrk);
-                                                            if (newBrk) setInsights(explainSlot(slot, newBrk, duration, isNew));
-
-                                                            setShowAlternative(false); // Hide the grid after picking to show the summary block
-                                                        }}
-                                                        className={btnClass}
-                                                    >
-                                                        <span className={textClass}>
-                                                            {iconNode} {slot}
-                                                        </span>
-                                                    </button>
-                                                );
-                                            })}
+                                <div className="mt-8 animate-in fade-in duration-300">
+                                    <div className="mb-4">
+                                        <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Select a Time Slot</h4>
+                                        <div className="text-xs text-slate-500 flex items-center gap-3">
+                                            <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-rose-200 border border-rose-300"></div> Occupied by another centre</span>
+                                            <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> AI Pick</span>
+                                            <span>Click any free slot to select</span>
                                         </div>
                                     </div>
-                                )}
+
+                                    <div className="grid grid-cols-5 gap-2">
+                                        {generateSlots().map((slot) => {
+                                            const occ = isSlotOccupied(slot, duration, schedule);
+                                            const isRec = slot === recSlot;
+                                            const isSel = slot === selectedSlot;
+
+                                            if (occ.occupied) {
+                                                return (
+                                                    <div key={slot} className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-rose-100 bg-rose-50 text-rose-700 opacity-60 cursor-not-allowed h-16">
+                                                        <span className="font-bold text-sm">{slot}</span>
+                                                        <span className="text-[10px] truncate w-full text-center mt-0.5">{occ.centreName}</span>
+                                                    </div>
+                                                );
+                                            }
+
+                                            let btnClass = "flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all h-16 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50";
+                                            let textClass = "font-bold text-sm text-slate-700";
+                                            let iconNode = null;
+
+                                            if (isRec) {
+                                                btnClass = "flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all h-16 cursor-pointer bg-indigo-600 border-indigo-600 shadow-md";
+                                                textClass = "font-bold text-sm text-white flex items-center gap-1";
+                                                iconNode = "⭐";
+                                            } else if (isSel) {
+                                                btnClass = "flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all h-16 cursor-pointer bg-indigo-50 border-indigo-500";
+                                                textClass = "font-bold text-sm text-indigo-700 flex items-center gap-1";
+                                                iconNode = "✓";
+                                            }
+
+                                            return (
+                                                <button
+                                                    key={slot}
+                                                    onClick={() => {
+                                                        setRecSlot(slot);
+                                                        setSelectedSlot(slot);
+
+                                                        // Find if this is one of our explicitly scored feasible slots to show the score
+                                                        const feasibleMatch = allFeasible.find(f => f.slot === slot);
+                                                        setRecScore(feasibleMatch ? feasibleMatch.score : 0);
+
+                                                        const { breakdown: newBrk } = scoreSlot(slot, attendance, collection, chainedTravel.mins / 60, isNew);
+                                                        setBreakdown(newBrk);
+                                                        if (newBrk) setInsights(explainSlot(slot, newBrk, duration, isNew));
+                                                    }}
+                                                    className={btnClass}
+                                                >
+                                                    <span className={textClass}>
+                                                        {iconNode} {slot}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </>
                         )}
                     </div>
