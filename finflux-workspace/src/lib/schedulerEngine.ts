@@ -258,7 +258,7 @@ export interface ScoreBreakdown {
     total: number;
 }
 
-export function scoreSlot(slotStart: string, attendance: number, collection: number, travelHours: number): { total: number, breakdown: ScoreBreakdown } {
+export function scoreSlot(slotStart: string, attendance: number, collection: number, travelHours: number, isNewCenter = false): { total: number, breakdown: ScoreBreakdown } {
     const tod = timeOfDayPreference(slotStart);
     const travelPenalty = Math.min(travelHours, 1.0);
 
@@ -283,7 +283,7 @@ export function scoreSlot(slotStart: string, attendance: number, collection: num
     return { total, breakdown };
 }
 
-export function explainSlot(slotStart: string, breakdown: ScoreBreakdown, durationMins: number): string[] {
+export function explainSlot(slotStart: string, breakdown: ScoreBreakdown, durationMins: number, isNewCenter = false): string[] {
     const reasons: string[] = [];
     const hour = parseInt(slotStart.split(':')[0], 10);
     const { time_of_day_score: tod, attendance_rate: att, collection_rate: col, travel_hours: tHr } = breakdown;
@@ -300,7 +300,9 @@ export function explainSlot(slotStart: string, breakdown: ScoreBreakdown, durati
     }
 
     // Attendance insight
-    if (att >= 0.85) {
+    if (isNewCenter) {
+        reasons.push(`🌱 **New Centre Baseline** — No historical data available. Using a conservative ${Math.floor(att * 100)}% baseline attendance assumption.`);
+    } else if (att >= 0.85) {
         reasons.push(`✅ **High attendance centre** — ${Math.floor(att * 100)}% historical attendance means most members reliably show up.`);
     } else if (att >= 0.70) {
         reasons.push(`📊 **Average attendance** — ${Math.floor(att * 100)}% attendance; scheduling at peak time maximises turnout.`);
@@ -309,7 +311,9 @@ export function explainSlot(slotStart: string, breakdown: ScoreBreakdown, durati
     }
 
     // Collection insight
-    if (col >= 0.90) {
+    if (isNewCenter) {
+        reasons.push(`🌱 **New Target Collection** — Assuming a standard ${Math.floor(col * 100)}% collection target for new centre planning.`);
+    } else if (col >= 0.90) {
         reasons.push(`💰 **Excellent collection rate** — ${Math.floor(col * 100)}% collection rate boosts this slot's priority score significantly.`);
     } else if (col >= 0.80) {
         reasons.push(`💳 **Good collection rate** — ${Math.floor(col * 100)}% collection reinforces the value of this meeting slot.`);
@@ -340,7 +344,8 @@ export function recommendSlot(
     availabilityWindows: [string, string][],
     attendance: number,
     collection: number,
-    travelTimeMins: number
+    travelTimeMins: number,
+    isNewCenter = false
 ): { bestSlot: string | null, duration: number, allFeasible: { slot: string, score: number }[], topBreakdown: ScoreBreakdown | null } {
     const duration = calculateDuration(totalMembers);
     const needed = slotsNeeded(duration);
@@ -355,7 +360,7 @@ export function recommendSlot(
 
     for (const slot of slots) {
         if (insideWindow(slot, needed, availabilityWindows)) {
-            const { total } = scoreSlot(slot, attendance, collection, travelHours);
+            const { total } = scoreSlot(slot, attendance, collection, travelHours, isNewCenter);
             feasible.push({ slot, score: total });
         }
     }
@@ -364,7 +369,7 @@ export function recommendSlot(
 
     if (feasible.length > 0) {
         const topSlot = feasible[0].slot;
-        const { breakdown: topBreakdown } = scoreSlot(topSlot, attendance, collection, travelHours);
+        const { breakdown: topBreakdown } = scoreSlot(topSlot, attendance, collection, travelHours, isNewCenter);
         return { bestSlot: topSlot, duration, allFeasible: feasible, topBreakdown };
     } else {
         return { bestSlot: null, duration, allFeasible: [], topBreakdown: null };

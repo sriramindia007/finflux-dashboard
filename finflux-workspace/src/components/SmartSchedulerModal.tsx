@@ -105,7 +105,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
 
         // Run engine
         const { duration, allFeasible: all } = recommendSlot(
-            cMembers, DEFAULT_WINDOWS, attendance, collection, travel.mins
+            cMembers, DEFAULT_WINDOWS, attendance, collection, travel.mins, isNew
         );
 
         // Filter out occupied slots
@@ -122,11 +122,11 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
             setRecSlot(best);
             setRecScore(available[0].score);
             setSelectedSlot(best);
-            const { breakdown: topBreakdown } = scoreSlot(best, attendance, collection, travel.mins / 60);
+            const { breakdown: topBreakdown } = scoreSlot(best, attendance, collection, travel.mins / 60, isNew);
             setBreakdown(topBreakdown);
 
             if (topBreakdown) {
-                setInsights(explainSlot(best, topBreakdown, duration));
+                setInsights(explainSlot(best, topBreakdown, duration, isNew));
             }
         } else {
             setRecSlot(null);
@@ -358,9 +358,9 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                                             const feasibleMatch = allFeasible.find(f => f.slot === slot);
                                                             setRecScore(feasibleMatch ? feasibleMatch.score : 0);
 
-                                                            const { breakdown: newBrk } = scoreSlot(slot, attendance, collection, chainedTravel.mins / 60);
+                                                            const { breakdown: newBrk } = scoreSlot(slot, attendance, collection, chainedTravel.mins / 60, isNew);
                                                             setBreakdown(newBrk);
-                                                            if (newBrk) setInsights(explainSlot(slot, newBrk, duration));
+                                                            if (newBrk) setInsights(explainSlot(slot, newBrk, duration, isNew));
 
                                                             setShowAlternative(false); // Hide the grid after picking to show the summary block
                                                         }}
