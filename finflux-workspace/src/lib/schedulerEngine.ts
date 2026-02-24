@@ -55,7 +55,7 @@ function getPermutations<T>(arr: T[]): T[][] {
 }
 
 export function calculateOptimalRoute(
-    stops: { lat: number, lng: number, time: number, type: string }[],
+    stops: { name: string, lat: number, lng: number, time: number, type: string }[],
     durationMins = 30
 ): { route: typeof stops, km: number, mins: number, isValid: boolean } {
     if (stops.length <= 2) {
