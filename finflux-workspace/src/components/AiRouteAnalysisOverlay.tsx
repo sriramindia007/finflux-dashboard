@@ -155,16 +155,71 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                     </div>
 
                     {/* AI Insight */}
-                    <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${finalEff < 90 ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
-                        <div className="text-2xl">{finalEff < 90 ? '💡' : '✅'}</div>
-                        <div>
-                            <div className="font-bold mb-1">AI Route Validator</div>
-                            <p className="text-sm opacity-90">
-                                {finalEff < 90
-                                    ? `Your planned chronological route travels ${finalWasteKm} extra kilometres. Rather than driving back-and-forth across town, the AI has geographically rearranged your other meetings around your newly nominated slot, creating a streamlined circular route.`
-                                    : `System Validation: Your planned chronological timeline perfectly matches the mathematical shortest path! This confirms your current schedule is highly efficient and requires no further geographical optimization.`}
-                            </p>
+                    <div className={`mb-6 p-4 rounded-xl border ${finalEff < 90 ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
+                        <div className="flex items-start gap-3">
+                            <div className="text-2xl mt-1">{finalEff < 90 ? '💡' : '✅'}</div>
+                            <div>
+                                <div className="font-bold mb-1 border-b border-black/5 pb-2">AI Route Validator & ROI Dashboard</div>
+                                <p className="text-sm opacity-90 mt-2">
+                                    {finalEff < 90
+                                        ? `Your planned chronological route travels ${finalWasteKm} extra kilometres. Rather than driving back-and-forth across town, the AI has geographically rearranged your morning meetings around your manually nominated slot, creating a streamlined circular route.`
+                                        : `System Validation: Your planned chronological timeline perfectly matches the mathematical shortest path! This confirms your current schedule is highly efficient and requires no further geographical optimization.`}
+                                </p>
+                            </div>
                         </div>
+
+                        {finalEff < 90 && (
+                            <div className="grid grid-cols-2 gap-6 mt-5 pt-5 border-t border-blue-200/50">
+                                {/* Route Sequence */}
+                                <div>
+                                    <div className="text-xs font-bold uppercase tracking-wider mb-3 text-blue-800 opacity-80 flex items-center gap-2">
+                                        <MapPin size={14} /> Recommended Order
+                                    </div>
+                                    <div className="flex flex-col gap-2 text-sm font-medium relative">
+                                        {/* Vertical connector line */}
+                                        <div className="absolute left-2.5 top-3 bottom-3 w-[2px] bg-blue-200/50 -z-10"></div>
+
+                                        {stopsOptimal.map((stop, i) => (
+                                            <div key={i} className="flex items-center gap-3 bg-white/60 p-2 rounded-lg border border-white">
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] shadow-sm z-10 ${i === 0 ? 'bg-red-100 text-red-700 border border-red-200' : stop.type === 'target' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
+                                                    {i === 0 ? '🏠' : i}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="truncate text-slate-700">{stop.name}</div>
+                                                </div>
+                                                <div className={`text-xs ml-auto font-bold px-2 py-1 rounded ${stop.type === 'target' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {i === 0 ? '09:00 (Start)' : minsToTime(stop.time)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Tangible ROI */}
+                                <div>
+                                    <div className="text-xs font-bold uppercase tracking-wider mb-3 text-emerald-800 opacity-80 flex items-center gap-2">
+                                        📈 Projected Financial ROI
+                                    </div>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between items-center bg-white/60 px-3 py-2.5 rounded-lg">
+                                            <span className="text-slate-600">Distance Saved (Per Trip):</span>
+                                            <span className="font-bold text-slate-800">{finalWasteKm} km</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-white/60 px-3 py-2.5 rounded-lg border-b border-dashed border-slate-200">
+                                            <span className="text-slate-600">Fuel Cost Reduction <span className="text-[10px] font-normal opacity-60">(assuming ₹2.5/km)</span>:</span>
+                                            <span className="font-bold text-emerald-600">₹{(finalWasteKm * 2.5).toFixed(1)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-emerald-100/50 p-3 rounded-lg border border-emerald-200 text-emerald-900 shadow-sm mt-4">
+                                            <div>
+                                                <span className="block font-bold">Scaled Annual Savings</span>
+                                                <span className="text-[10px] opacity-80 font-medium">1 Officer • 250 Working Days</span>
+                                            </div>
+                                            <span className="font-black text-xl tracking-tight">₹{(finalWasteKm * 2.5 * 250).toLocaleString('en-IN')}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Maps */}
