@@ -111,7 +111,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
         // Filter out occupied slots
         const available = [];
         for (const f of all) {
-            const occ = isSlotOccupied(f.slot, duration, schedule);
+            const occ = isSlotOccupied(f.slot, duration, schedule, centreData.name);
             if (!occ.occupied) {
                 available.push(f);
             }
@@ -263,15 +263,18 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                                         setIsSaved(true);
                                                         // Append to schedule dynamically so map updates
                                                         if (selectedSlot) {
-                                                            setSchedule(prev => [...prev, {
-                                                                centre: centreData.name,
-                                                                lat: centreData.lat || cLat,
-                                                                lng: centreData.lng || cLng,
-                                                                start: selectedSlot,
-                                                                end: endTime,
-                                                                color: "#3b82f6", // new slot color
-                                                                bg: "#eff6ff"
-                                                            }]);
+                                                            setSchedule(prev => {
+                                                                const filtered = prev.filter(p => p.centre !== centreData.name);
+                                                                return [...filtered, {
+                                                                    centre: centreData.name,
+                                                                    lat: centreData.lat || cLat,
+                                                                    lng: centreData.lng || cLng,
+                                                                    start: selectedSlot,
+                                                                    end: endTime,
+                                                                    color: "#3b82f6", // new slot color
+                                                                    bg: "#eff6ff"
+                                                                }];
+                                                            });
                                                         }
                                                     }, 500);
                                                 }}
@@ -326,7 +329,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
 
                                     <div className="grid grid-cols-5 gap-2">
                                         {generateSlots().map((slot) => {
-                                            const occ = isSlotOccupied(slot, duration, schedule);
+                                            const occ = isSlotOccupied(slot, duration, schedule, centreData.name);
                                             const isRec = slot === recSlot;
                                             const isSel = slot === selectedSlot;
 

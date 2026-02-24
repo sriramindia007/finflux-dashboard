@@ -173,11 +173,13 @@ export function minsToTime(mins: number): string {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-export function isSlotOccupied(startStr: string, durMins: number, schedule: MeetingStop[]): { occupied: boolean, centreName: string | null } {
+export function isSlotOccupied(startStr: string, durMins: number, schedule: MeetingStop[], ignoreCentre?: string): { occupied: boolean, centreName: string | null } {
     const s = timeToMins(startStr);
     const e = s + durMins;
 
     for (const b of schedule) {
+        if (ignoreCentre && b.centre === ignoreCentre) continue;
+
         const bs = timeToMins(b.start);
         const be = timeToMins(b.end);
 

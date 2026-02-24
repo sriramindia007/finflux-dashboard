@@ -23,6 +23,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
         const allStops = [{ lat: FO_BASE.lat, lng: FO_BASE.lng, name: FO_BASE.name, type: 'base', time: 0 }];
 
         schedule.forEach(b => {
+            if (b.centre === targetCentre.name) return;
             allStops.push({ lat: b.lat, lng: b.lng, name: b.centre, type: 'busy', time: timeToMins(b.start) });
         });
 
