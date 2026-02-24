@@ -120,7 +120,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                             <div className="font-bold mb-1">AI Route Validator</div>
                             <p className="text-sm opacity-90">
                                 {effectiveness < 90
-                                    ? `Your planned chronological route travels ${wasteKm} extra kilometres. If you rearrange your morning meetings based on the AI Optimal map below, you can save significant fuel and field time.`
+                                    ? `Your planned chronological route travels ${wasteKm} extra kilometres. Rather than driving back-and-forth across town, the AI has geographically rearranged your other meetings around your newly nominated slot, creating a streamlined circular route.`
                                     : `System Validation: Your planned chronological timeline perfectly matches the mathematical shortest path! This confirms your current schedule is highly efficient and requires no further geographical optimization.`}
                             </p>
                         </div>

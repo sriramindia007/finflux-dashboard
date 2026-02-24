@@ -90,20 +90,25 @@ export function calculateOptimalRoute(
             const currentMeeting = currentRoute[i];
             const nextMeeting = currentRoute[i + 1];
 
+            // If this is the Target meeting, we MUST enforce that we didn't arrive "too late" for its scheduled slot.
+            // If the user picked 1:00 PM (780 mins), but the geographic drive puts us here at 2:00 PM, this whole route permutation is invalid.
+            if (currentMeeting.type === 'target') {
+                if (simulatedMins > currentMeeting.time) {
+                    isValidChronology = false;
+                    break;
+                }
+                // If we arrived early, we wait until the scheduled time.
+                if (simulatedMins < currentMeeting.time) {
+                    simulatedMins = currentMeeting.time;
+                }
+            }
+
             // 1. Hold the meeting
             simulatedMins += durationMins;
 
             // 2. Drive to the next meeting
             const transitTime = Math.max(5, Math.floor((haversineDistance(currentMeeting.lat, currentMeeting.lng, nextMeeting.lat, nextMeeting.lng) * 1.4 / 25) * 60));
             simulatedMins += transitTime;
-
-            // 3. If the next meeting is the Target Centre, check if we arrived earlier than its manually proposed start time.
-            // If we did, we have to "wait" until its scheduled time.
-            if (nextMeeting.type === 'target') {
-                if (simulatedMins < nextMeeting.time) {
-                    simulatedMins = nextMeeting.time;
-                }
-            }
 
             // End of Day Boundary Guard: If any permutation pushes us past 7:00 PM (1140 mins), it's strictly invalid.
             if (simulatedMins > 1140) {
