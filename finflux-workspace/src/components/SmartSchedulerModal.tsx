@@ -47,8 +47,8 @@ const DEFAULT_WINDOWS: [string, string][] = [["08:00", "13:00"], ["14:00", "18:0
 // Initial mock schedule
 const INITIAL_FO_SCHEDULE: MeetingStop[] = [
     { centre: "Tumkur North C2", lat: 13.3550, lng: 77.1150, start: "09:00", end: "10:20", color: "#C53434", bg: "#F9EBEB" },
-    { centre: "Tumkur West C1", lat: 13.3300, lng: 77.0800, start: "11:30", end: "12:50", color: "#F4A246", bg: "#FEF6EC" },
-    { centre: "Tumkur South C3", lat: 13.3100, lng: 77.1000, start: "15:00", end: "16:20", color: "#C53434", bg: "#F9EBEB" },
+    { centre: "Tumkur South C3", lat: 13.3100, lng: 77.1000, start: "11:30", end: "12:50", color: "#C53434", bg: "#F9EBEB" },
+    { centre: "Tumkur West C1", lat: 13.3300, lng: 77.0800, start: "15:00", end: "16:20", color: "#F4A246", bg: "#FEF6EC" },
 ];
 
 const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClose, centreData, onConfirm }) => {
