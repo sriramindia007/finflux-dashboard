@@ -36,7 +36,30 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
         const { km: distP, mins: minsP } = calculateRouteMetrics(stopsPlanned);
 
         // Optimal Route Metrics
-        const { route: stopsOptimal, km: distO, mins: minsO } = calculateOptimalRoute(stopsPlanned);
+        const { route: initialOptimalStops, km: distO, mins: minsO } = calculateOptimalRoute(stopsPlanned);
+
+        // Calculate the actual chronological timeline for the optimal route
+        let simulatedMins = 540; // 09:00 AM
+        const stopsOptimal = initialOptimalStops.map((stop, index) => {
+            if (index === 0) return stop; // Base
+
+            const prevStop = initialOptimalStops[index - 1];
+
+            // Add Transit
+            const transitTime = Math.max(5, Math.floor((L.latLng(prevStop.lat, prevStop.lng).distanceTo(L.latLng(stop.lat, stop.lng)) / 1000 * 1.4 / 25) * 60));
+            simulatedMins += transitTime;
+
+            // Arrive at target early? Wait.
+            if (stop.type === 'target' && simulatedMins < stop.time) {
+                simulatedMins = stop.time;
+            }
+
+            const meetingStartTime = simulatedMins;
+            simulatedMins += 30; // Meeting Duration
+
+            return { ...stop, time: meetingStartTime };
+        });
+
 
         const eff = Math.min(100, Math.floor((distO / Math.max(1, distP)) * 100));
 

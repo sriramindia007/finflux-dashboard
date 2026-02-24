@@ -70,30 +70,48 @@ export function calculateOptimalRoute(
     let bestDist = Infinity;
     let foundValid = false;
 
+    // Start of the day in minutes (e.g. 09:00 AM)
+    const DAY_START_MINS = 540;
+
     const permutations = getPermutations(others);
 
     for (const perm of permutations) {
         const currentRoute = [base, ...perm];
         const metrics = calculateRouteMetrics(currentRoute);
 
-        // Check if this permutation causes temporal overlaps
+        // Simulate a continuous chronological drive through this specific permutation
         let isValidChronology = true;
-        let currentTime = currentRoute[1].time; // Start at the first meeting time
+        let simulatedMins = DAY_START_MINS;
+
+        // Start from base (index 0) to first meeting (index 1)
+        simulatedMins += Math.max(5, Math.floor((haversineDistance(base.lat, base.lng, currentRoute[1].lat, currentRoute[1].lng) * 1.4 / 25) * 60));
 
         for (let i = 1; i < currentRoute.length - 1; i++) {
             const currentMeeting = currentRoute[i];
             const nextMeeting = currentRoute[i + 1];
 
-            const transitTime = Math.max(5, Math.floor((haversineDistance(currentMeeting.lat, currentMeeting.lng, nextMeeting.lat, nextMeeting.lng) * 1.4 / 25) * 60));
+            // 1. Hold the meeting
+            simulatedMins += durationMins;
 
-            // If the time we finish the current meeting + transit time is strictly GREATER than the start of the next meeting, it's physically impossible.
-            if (currentMeeting.time + durationMins + transitTime > nextMeeting.time) {
+            // 2. Drive to the next meeting
+            const transitTime = Math.max(5, Math.floor((haversineDistance(currentMeeting.lat, currentMeeting.lng, nextMeeting.lat, nextMeeting.lng) * 1.4 / 25) * 60));
+            simulatedMins += transitTime;
+
+            // 3. If the next meeting is the Target Centre, check if we arrived earlier than its manually proposed start time.
+            // If we did, we have to "wait" until its scheduled time.
+            if (nextMeeting.type === 'target') {
+                if (simulatedMins < nextMeeting.time) {
+                    simulatedMins = nextMeeting.time;
+                }
+            }
+
+            // End of Day Boundary Guard: If any permutation pushes us past 7:00 PM (1140 mins), it's strictly invalid.
+            if (simulatedMins > 1140) {
                 isValidChronology = false;
                 break;
             }
         }
 
-        // Apply a massive penalty for physically impossible routes
         const penalty = isValidChronology ? 0 : 9999;
         const totalCost = metrics.km + penalty;
 
