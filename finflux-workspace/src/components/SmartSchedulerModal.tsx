@@ -42,7 +42,7 @@ interface SmartSchedulerModalProps {
 
 // System defaults for the mock
 const FO_BASE = { lat: 13.3300, lng: 77.0950, name: "Tumkur Branch Office" };
-const DEFAULT_WINDOWS: [string, string][] = [["08:00", "13:00"], ["14:00", "18:00"]];
+const DEFAULT_WINDOWS: [string, string][] = [["08:00", "13:00"], ["14:00", "19:00"]];
 
 // Initial mock schedule
 const INITIAL_FO_SCHEDULE: MeetingStop[] = [
@@ -56,6 +56,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     const [schedule, setSchedule] = useState<MeetingStop[]>(INITIAL_FO_SCHEDULE);
 
     // Engine State
+    const [aiBestSlot, setAiBestSlot] = useState<string | null>(null);
     const [recSlot, setRecSlot] = useState<string | null>(null);
     const [recScore, setRecScore] = useState<number | null>(null);
     const [allFeasible, setAllFeasible] = useState<{ slot: string, score: number }[]>([]);
@@ -119,6 +120,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
 
         if (available.length > 0) {
             const best = available[0].slot;
+            setAiBestSlot(best);
             setRecSlot(best);
             setRecScore(available[0].score);
             setSelectedSlot(best);
@@ -129,6 +131,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                 setInsights(explainSlot(best, topBreakdown, duration, isNew));
             }
         } else {
+            setAiBestSlot(null);
             setRecSlot(null);
             setRecScore(null);
             setSelectedSlot(null);
@@ -285,6 +288,21 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                             </button>
                                         </div>
 
+                                        {/* Suboptimal Selection Warning */}
+                                        {selectedSlot !== aiBestSlot && (
+                                            <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-top-2">
+                                                <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
+                                                <div className="text-orange-900 text-sm">
+                                                    <strong>Suboptimal Selection:</strong> You are overriding the AI's geographic recommendation.
+                                                    <ul className="list-disc ml-5 mt-2 space-y-1 opacity-90 text-[13px]">
+                                                        <li><strong>Productivity:</strong> Disrupts the chronological flow, creating unnecessary downtime between meetings.</li>
+                                                        <li><strong>Distance:</strong> Forces the Field Officer into inefficient back-and-forth travel, increasing fuel costs.</li>
+                                                        <li><strong>Customer Availability:</strong> Diverges from the peak predicted attendance and collection probability window for this specific demographic.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Breakdowns */}
                                         <div className="mt-6 border-t border-indigo-100/50 pt-4">
                                             <button
@@ -346,7 +364,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                             let textClass = "font-bold text-sm text-slate-700";
                                             let iconNode = null;
 
-                                            if (isRec) {
+                                            if (slot === aiBestSlot) {
                                                 btnClass = "flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all h-16 cursor-pointer bg-indigo-600 border-indigo-600 shadow-md";
                                                 textClass = "font-bold text-sm text-white flex items-center gap-1";
                                                 iconNode = "⭐";
