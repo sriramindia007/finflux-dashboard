@@ -140,9 +140,8 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     };
 
     useEffect(() => {
-        if (isOpen) {
-            // Reset state and run engine
-            setIsSaved(false);
+        if (isOpen && !isSaved) {
+            // Only run recommendation when first opening, not after save
             runRecommendation();
         }
     }, [isOpen, centreData]);
@@ -259,8 +258,22 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                             <button
                                                 onClick={() => {
                                                     setIsSaving(true);
-                                                    setTimeout(() => setIsSaving(false), 200);
-                                                    setIsSaved(true);
+                                                    setTimeout(() => {
+                                                        setIsSaving(false);
+                                                        setIsSaved(true);
+                                                        // Append to schedule dynamically so map updates
+                                                        if (selectedSlot) {
+                                                            setSchedule(prev => [...prev, {
+                                                                centre: centreData.name,
+                                                                lat: centreData.lat || cLat,
+                                                                lng: centreData.lng || cLng,
+                                                                start: selectedSlot,
+                                                                end: endTime,
+                                                                color: "#3b82f6", // new slot color
+                                                                bg: "#eff6ff"
+                                                            }]);
+                                                        }
+                                                    }, 500);
                                                 }}
                                                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
                                             >
@@ -416,8 +429,8 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                             <div className="p-4 bg-white hidden lg:block h-[200px] overflow-y-auto">
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Today's Schedule</h4>
                                 <div className="space-y-3">
-                                    {schedule.map(s => (
-                                        <div key={s.centre} className="flex gap-3 text-sm items-center">
+                                    {schedule.map((s, i) => (
+                                        <div key={`${s.centre}-${i}`} className="flex gap-3 text-sm items-center">
                                             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }}></div>
                                             <div className="font-semibold text-slate-700 flex-1">{s.start} - {s.end}</div>
                                             <div className="text-slate-500 text-xs truncate max-w-[120px] font-medium" title={s.centre}>{s.centre}</div>
