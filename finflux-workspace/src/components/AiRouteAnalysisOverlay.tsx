@@ -3,7 +3,7 @@ import { X, MapPin } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { MeetingStop, timeToMins, calculateRouteMetrics, calculateOptimalRoute } from '../lib/schedulerEngine';
+import { MeetingStop, timeToMins, calculateRouteMetrics, calculateOptimalRoute, minsToTime } from '../lib/schedulerEngine';
 
 interface AiRouteAnalysisOverlayProps {
     onClose: () => void;
@@ -137,18 +137,21 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
 // Internal Map Component for the overlays
 const RouteMap = ({ stops, lineColor }: { stops: any[], lineColor: string }) => {
     // Generate icons dynamically so we can show numbers
-    const getNumberedIcon = (num: number | string, isBase: boolean, isTarget: boolean) => {
+    const getNumberedIcon = (num: number | string, isBase: boolean, isTarget: boolean, timeStr?: string) => {
         let color = '#64748b'; // slate
         if (isBase) color = '#ef4444'; // red
         else if (isTarget) color = '#3b82f6'; // blue
 
-        const html = `<div style="background-color: ${color}; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; font-family: sans-serif;">${num}</div>`;
+        const iconHtml = `<div style="background-color: ${color}; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; font-family: sans-serif;">${num}</div>`;
+        const timeHtml = timeStr ? `<div style="margin-top: 2px; background: white; padding: 1px 4px; border-radius: 4px; font-size: 9px; font-weight: bold; color: ${color}; box-shadow: 0 1px 2px rgba(0,0,0,0.2); white-space: nowrap; font-family: sans-serif;">${timeStr}</div>` : '';
+
+        const html = `<div style="display: flex; flex-direction: column; items-center;">${iconHtml}${timeHtml}</div>`;
 
         return L.divIcon({
             html,
             className: 'custom-div-icon',
-            iconSize: [28, 28],
-            iconAnchor: [14, 14]
+            iconSize: [28, 40],
+            iconAnchor: [14, 20]
         });
     };
 
@@ -160,7 +163,7 @@ const RouteMap = ({ stops, lineColor }: { stops: any[], lineColor: string }) => 
     return (
         <MapContainer
             center={stops.length > 0 ? [stops[0].lat, stops[0].lng] : [13.33, 77.09]}
-            zoom={11}
+            zoom={12}
             scrollWheelZoom={true}
             className="h-full w-full"
         >
@@ -171,11 +174,13 @@ const RouteMap = ({ stops, lineColor }: { stops: any[], lineColor: string }) => 
                 const isTarget = stop.type === 'target';
                 const num = isBase ? '🏠' : idx;
 
+                const timeStr = isBase ? '' : minsToTime(stop.time);
+
                 return (
-                    <Marker key={idx} position={[stop.lat, stop.lng]} icon={getNumberedIcon(num, isBase, isTarget)}>
+                    <Marker key={idx} position={[stop.lat, stop.lng]} icon={getNumberedIcon(num, isBase, isTarget, timeStr)}>
                         <Popup>
                             <strong>{stop.name}</strong><br />
-                            {isBase ? 'Field Officer Base' : 'Meeting Location'}
+                            {isBase ? 'Field Officer Base' : `Meeting Location: ${timeStr}`}
                         </Popup>
                     </Marker>
                 );

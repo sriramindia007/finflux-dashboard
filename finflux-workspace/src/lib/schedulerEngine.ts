@@ -54,10 +54,13 @@ function getPermutations<T>(arr: T[]): T[][] {
     return perms;
 }
 
-export function calculateOptimalRoute(stops: { lat: number, lng: number }[]): { route: typeof stops, km: number, mins: number } {
+export function calculateOptimalRoute(
+    stops: { lat: number, lng: number, time: number, type: string }[],
+    durationMins = 30
+): { route: typeof stops, km: number, mins: number, isValid: boolean } {
     if (stops.length <= 2) {
         const metrics = calculateRouteMetrics(stops);
-        return { route: stops, km: metrics.km, mins: metrics.mins };
+        return { route: stops, km: metrics.km, mins: metrics.mins, isValid: true };
     }
 
     const base = stops[0];
@@ -65,19 +68,45 @@ export function calculateOptimalRoute(stops: { lat: number, lng: number }[]): { 
 
     let bestRoute: typeof stops = [];
     let bestDist = Infinity;
+    let foundValid = false;
 
     const permutations = getPermutations(others);
+
     for (const perm of permutations) {
         const currentRoute = [base, ...perm];
         const metrics = calculateRouteMetrics(currentRoute);
-        if (metrics.km < bestDist) {
-            bestDist = metrics.km;
+
+        // Check if this permutation causes temporal overlaps
+        let isValidChronology = true;
+        let currentTime = currentRoute[1].time; // Start at the first meeting time
+
+        for (let i = 1; i < currentRoute.length - 1; i++) {
+            const currentMeeting = currentRoute[i];
+            const nextMeeting = currentRoute[i + 1];
+
+            const transitTime = Math.max(5, Math.floor((haversineDistance(currentMeeting.lat, currentMeeting.lng, nextMeeting.lat, nextMeeting.lng) * 1.4 / 25) * 60));
+
+            // If the time we finish the current meeting + transit time is strictly GREATER than the start of the next meeting, it's physically impossible.
+            if (currentMeeting.time + durationMins + transitTime > nextMeeting.time) {
+                isValidChronology = false;
+                break;
+            }
+        }
+
+        // Apply a massive penalty for physically impossible routes
+        const penalty = isValidChronology ? 0 : 9999;
+        const totalCost = metrics.km + penalty;
+
+        if (totalCost < bestDist) {
+            bestDist = totalCost;
             bestRoute = currentRoute;
+            foundValid = isValidChronology;
         }
     }
 
+    // Recalculate pure metrics without the penalty for the final return
     const bestMetrics = calculateRouteMetrics(bestRoute);
-    return { route: bestRoute, km: bestMetrics.km, mins: bestMetrics.mins };
+    return { route: bestRoute, km: bestMetrics.km, mins: bestMetrics.mins, isValid: foundValid };
 }
 
 // ---------------------------------------------------------------------------
