@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, MapPin, Users, ClipboardCheck, Banknote, CalendarCheck, AlertTriangle, ChevronDown, Check, Zap } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 import {
     calculateDuration,
     calculateChainedTravel,
@@ -355,15 +369,42 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                         <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Route Context</h3>
 
                         <div className="flex-1 bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
-                            {/* Map Placeholder */}
-                            <div className="flex-1 bg-blue-50 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
-                                {/* Decorational dots for map */}
-                                <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.5 }}></div>
-                                <div className="z-10 text-center">
-                                    <MapPin size={32} className="text-blue-400 mx-auto mb-2 opacity-50" />
-                                    <p className="text-sm font-semibold text-blue-900/50 uppercase tracking-widest">Interactive Route Map</p>
-                                    <p className="text-xs text-blue-800/40 font-medium px-4 mt-2">Map preview restricted in sandbox</p>
-                                </div>
+                            {/* Interactive Route Map */}
+                            <div className="flex-1 border-b border-slate-100 min-h-[250px] relative z-0">
+                                <MapContainer
+                                    center={[FO_BASE.lat, FO_BASE.lng]}
+                                    zoom={11}
+                                    scrollWheelZoom={true}
+                                    className="absolute inset-0 z-0 h-full w-full font-sans"
+                                >
+                                    <TileLayer
+                                        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                                    />
+                                    {/* Base */}
+                                    <Marker position={[FO_BASE.lat, FO_BASE.lng]}>
+                                        <Popup><strong>{FO_BASE.name}</strong><br />Field Officer Base</Popup>
+                                    </Marker>
+
+                                    {/* Existing Schedule */}
+                                    {schedule.map((s, idx) => (
+                                        <Marker key={idx} position={[s.lat, s.lng]}>
+                                            <Popup>
+                                                <strong>{s.centre}</strong><br />
+                                                Time: {s.start} - {s.end}
+                                            </Popup>
+                                        </Marker>
+                                    ))}
+
+                                    {/* Selected Slot Centre */}
+                                    {selectedSlot && centreData.lat && (
+                                        <Marker position={[centreData.lat, centreData.lng]}>
+                                            <Popup>
+                                                <strong>{centreData.name}</strong><br />
+                                                {isSaved ? "Scheduled:" : "Proposed:"} {selectedSlot} - {endTime}
+                                            </Popup>
+                                        </Marker>
+                                    )}
+                                </MapContainer>
                             </div>
 
                             {/* Schedule Summary */}

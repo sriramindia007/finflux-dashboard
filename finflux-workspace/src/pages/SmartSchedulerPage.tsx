@@ -83,7 +83,7 @@ const SmartSchedulerPage: React.FC = () => {
                     <SmartSchedulerModal
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
-                        centreData={{ name: currentCentreName, clients: c.members }}
+                        centreData={{ name: currentCentreName, clients: c.members, lat: c.lat, lng: c.lng }}
                         onConfirm={handleConfirmSlot}
                     />
                 </div>
