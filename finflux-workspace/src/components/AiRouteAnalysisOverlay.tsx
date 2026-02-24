@@ -92,13 +92,13 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
 
                     {/* AI Insight */}
                     <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${effectiveness < 90 ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
-                        <div className="text-2xl">💡</div>
+                        <div className="text-2xl">{effectiveness < 90 ? '💡' : '✅'}</div>
                         <div>
-                            <div className="font-bold mb-1">AI Insight</div>
+                            <div className="font-bold mb-1">AI Route Validator</div>
                             <p className="text-sm opacity-90">
                                 {effectiveness < 90
                                     ? `Your planned chronological route travels ${wasteKm} extra kilometres. If you rearrange your morning meetings based on the AI Optimal map below, you can save significant fuel and field time.`
-                                    : `Your planned schedule is highly optimal! You are choosing an excellent travel path.`}
+                                    : `System Validation: Your planned chronological timeline perfectly matches the mathematical shortest path! This confirms your current schedule is highly efficient and requires no further geographical optimization.`}
                             </p>
                         </div>
                     </div>
