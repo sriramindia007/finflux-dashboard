@@ -12,7 +12,7 @@ export function calculateDuration(totalMembers: number, baseMin = 10, minPerMemb
 export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371.0; // Earth radius in km
     const toRad = (value: number) => (value * Math.PI) / 180;
-    
+
     const dlat = toRad(lat2 - lat1);
     const dlon = toRad(lon2 - lon1);
     const a =
@@ -20,6 +20,64 @@ export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2
         Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.pow(Math.sin(dlon / 2), 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
+}
+
+// ---------------------------------------------------------------------------
+// Route Evaluation (Current vs Optimal)
+// ---------------------------------------------------------------------------
+export function calculateRouteMetrics(stops: { lat: number, lng: number }[]): { km: number, mins: number } {
+    if (!stops || stops.length === 0) return { km: 0, mins: 0 };
+
+    let totalKm = 0.0;
+    for (let i = 0; i < stops.length - 1; i++) {
+        totalKm += haversineDistance(stops[i].lat, stops[i].lng, stops[i + 1].lat, stops[i + 1].lng);
+    }
+    // Return to base
+    totalKm += haversineDistance(stops[stops.length - 1].lat, stops[stops.length - 1].lng, stops[0].lat, stops[0].lng);
+
+    const travelMins = Math.floor((totalKm / 30.0) * 60);
+    return { km: Number(totalKm.toFixed(1)), mins: travelMins };
+}
+
+// Helper to get permutations for brute-force TSP
+function getPermutations<T>(arr: T[]): T[][] {
+    if (arr.length <= 1) return [arr];
+    const perms: T[][] = [];
+    for (let i = 0; i < arr.length; i++) {
+        const current = arr[i];
+        const remaining = arr.slice(0, i).concat(arr.slice(i + 1));
+        const remainingPerms = getPermutations(remaining);
+        for (const perm of remainingPerms) {
+            perms.push([current].concat(perm));
+        }
+    }
+    return perms;
+}
+
+export function calculateOptimalRoute(stops: { lat: number, lng: number }[]): { route: typeof stops, km: number, mins: number } {
+    if (stops.length <= 2) {
+        const metrics = calculateRouteMetrics(stops);
+        return { route: stops, km: metrics.km, mins: metrics.mins };
+    }
+
+    const base = stops[0];
+    const others = stops.slice(1);
+
+    let bestRoute: typeof stops = [];
+    let bestDist = Infinity;
+
+    const permutations = getPermutations(others);
+    for (const perm of permutations) {
+        const currentRoute = [base, ...perm];
+        const metrics = calculateRouteMetrics(currentRoute);
+        if (metrics.km < bestDist) {
+            bestDist = metrics.km;
+            bestRoute = currentRoute;
+        }
+    }
+
+    const bestMetrics = calculateRouteMetrics(bestRoute);
+    return { route: bestRoute, km: bestMetrics.km, mins: bestMetrics.mins };
 }
 
 // ---------------------------------------------------------------------------
@@ -36,10 +94,10 @@ export interface MeetingStop {
 }
 
 export function calculateChainedTravel(
-    foSchedule: MeetingStop[], 
-    targetLat: number, 
-    targetLng: number, 
-    foBaseLat: number, 
+    foSchedule: MeetingStop[],
+    targetLat: number,
+    targetLng: number,
+    foBaseLat: number,
     foBaseLng: number
 ): { mins: number, km: number } {
     if (!foSchedule || foSchedule.length === 0) {
@@ -68,7 +126,7 @@ export function frequencyCheck(frequencyStr: string, meetingDate: Date): { isVal
     }
 
     const freqLower = frequencyStr.toLowerCase();
-    
+
     // Get weekday name (e.g., 'monday')
     const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
     const dateWeekday = meetingDate.toLocaleDateString('en-US', options).toLowerCase();
@@ -89,14 +147,14 @@ export function frequencyCheck(frequencyStr: string, meetingDate: Date): { isVal
     const capitalizedDay = matchedDay.charAt(0).toUpperCase() + matchedDay.slice(1);
 
     if (dateWeekday === matchedDay) {
-        return { 
-            isValid: true, 
-            message: `✅ Centre meets on ${capitalizedDay}s — Today is a ${capitalizedDay} ✅` 
+        return {
+            isValid: true,
+            message: `✅ Centre meets on ${capitalizedDay}s — Today is a ${capitalizedDay} ✅`
         };
     } else {
-        return { 
-            isValid: false, 
-            message: `⚠️ Date mismatch — Centre meets on ${capitalizedDay}s, but ${formattedDate} is a ${dateWeekday.charAt(0).toUpperCase() + dateWeekday.slice(1)}. Consider rescheduling.` 
+        return {
+            isValid: false,
+            message: `⚠️ Date mismatch — Centre meets on ${capitalizedDay}s, but ${formattedDate} is a ${dateWeekday.charAt(0).toUpperCase() + dateWeekday.slice(1)}. Consider rescheduling.`
         };
     }
 }
@@ -118,11 +176,11 @@ export function minsToTime(mins: number): string {
 export function isSlotOccupied(startStr: string, durMins: number, schedule: MeetingStop[]): { occupied: boolean, centreName: string | null } {
     const s = timeToMins(startStr);
     const e = s + durMins;
-    
+
     for (const b of schedule) {
         const bs = timeToMins(b.start);
         const be = timeToMins(b.end);
-        
+
         // Overlap condition: max(s, bs) < min(e, be)
         if (Math.max(s, bs) < Math.min(e, be)) {
             return { occupied: true, centreName: b.centre };
@@ -138,7 +196,7 @@ export function generateSlots(start = "09:00", end = "17:30"): string[] {
     const slots: string[] = [];
     let currentMins = timeToMins(start);
     const endMins = timeToMins(end);
-    
+
     while (currentMins < endMins) {
         slots.push(minsToTime(currentMins));
         currentMins += SLOT_SIZE;
@@ -156,7 +214,7 @@ export function slotsNeeded(duration: number): number {
 export function insideWindow(slotStart: string, nSlots: number, windows: [string, string][]): boolean {
     const startMins = timeToMins(slotStart);
     const endMins = startMins + (nSlots * SLOT_SIZE);
-    
+
     for (const w of windows) {
         const wStart = timeToMins(w[0]);
         const wEnd = timeToMins(w[1]);
@@ -278,10 +336,10 @@ export function explainSlot(slotStart: string, breakdown: ScoreBreakdown, durati
 // Main recommendation function
 // ---------------------------------------------------------------------------
 export function recommendSlot(
-    totalMembers: number, 
-    availabilityWindows: [string, string][], 
-    attendance: number, 
-    collection: number, 
+    totalMembers: number,
+    availabilityWindows: [string, string][],
+    attendance: number,
+    collection: number,
     travelTimeMins: number
 ): { bestSlot: string | null, duration: number, allFeasible: { slot: string, score: number }[], topBreakdown: ScoreBreakdown | null } {
     const duration = calculateDuration(totalMembers);

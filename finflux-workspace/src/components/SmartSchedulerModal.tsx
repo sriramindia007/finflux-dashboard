@@ -14,6 +14,7 @@ let DefaultIcon = L.icon({
     popupAnchor: [1, -34],
 });
 L.Marker.prototype.options.icon = DefaultIcon;
+import AiRouteAnalysisOverlay from './AiRouteAnalysisOverlay';
 import {
     calculateDuration,
     calculateChainedTravel,
@@ -27,7 +28,9 @@ import {
     MeetingStop,
     timeToMins,
     minsToTime,
-    isSlotOccupied
+    isSlotOccupied,
+    calculateRouteMetrics,
+    calculateOptimalRoute
 } from '../lib/schedulerEngine';
 
 interface SmartSchedulerModalProps {
@@ -69,6 +72,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     const [showAlternative, setShowAlternative] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const [showAiAnalysis, setShowAiAnalysis] = useState(false);
 
     // Hardcode some data to match the Streamlit demo exactly if it's the target centre
     const isTargetCentre = centreData.name.includes("Tumkur C1");
@@ -427,11 +431,33 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                     )}
                                 </div>
                             </div>
+
+                            {/* Expand Map Button */}
+                            <div className="p-4 border-t border-slate-100 bg-white">
+                                <button
+                                    onClick={() => setShowAiAnalysis(true)}
+                                    className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition"
+                                >
+                                    <MapPin size={16} className="text-slate-400" />
+                                    Expand Map & AI Analysis
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
             </div>
+
+            {/* AI Route Analysis Overlay */}
+            {showAiAnalysis && (
+                <AiRouteAnalysisOverlay
+                    onClose={() => setShowAiAnalysis(false)}
+                    targetCentre={{ name: centreData.name, lat: cLat, lng: cLng }}
+                    selectedSlot={selectedSlot}
+                    schedule={schedule}
+                    duration={calculateDuration(cMembers)}
+                />
+            )}
         </div>
     );
 };
