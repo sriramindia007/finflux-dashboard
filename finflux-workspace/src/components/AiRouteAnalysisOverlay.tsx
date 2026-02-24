@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { X, MapPin } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -66,7 +66,46 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
         return { stopsPlanned, stopsOptimal, distPlanned: distP, minsPlanned: minsP, distOptimal: distO, minsOptimal: minsO, effectiveness: eff };
     }, [schedule, targetCentre, selectedSlot]);
 
-    const wasteKm = Number((distPlanned - distOptimal).toFixed(1));
+    // OSRM Real Road Routing State
+    const [osrmPlanned, setOsrmPlanned] = useState<{ geometry: [number, number][], distKm: number, durationMins: number } | null>(null);
+    const [osrmOptimal, setOsrmOptimal] = useState<{ geometry: [number, number][], distKm: number, durationMins: number } | null>(null);
+
+    // Fetch real road data from OSRM on load
+    useEffect(() => {
+        const fetchOsrmRoute = async (stops: any[], setter: any) => {
+            try {
+                const points = [...stops, stops[0]]; // Close the loop
+                const coordsString = points.map(s => `${s.lng},${s.lat}`).join(';');
+                const url = `http://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.code === 'Ok' && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const geometry = route.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number]);
+                    const distKm = Number((route.distance / 1000).toFixed(1));
+                    const durationMins = Math.floor(route.duration / 60);
+
+                    setter({ geometry, distKm, durationMins });
+                }
+            } catch (err) {
+                console.error("OSRM fetch failed", err);
+            }
+        };
+
+        if (stopsPlanned.length > 0) fetchOsrmRoute(stopsPlanned, setOsrmPlanned);
+        if (stopsOptimal.length > 0) fetchOsrmRoute(stopsOptimal, setOsrmOptimal);
+    }, [stopsPlanned, stopsOptimal]);
+
+    // Final Display Metrics (fallback to math if API is loading)
+    const finalPlannedDist = osrmPlanned ? osrmPlanned.distKm : distPlanned;
+    const finalPlannedMins = osrmPlanned ? osrmPlanned.durationMins : minsPlanned;
+    const finalOptimalDist = osrmOptimal ? osrmOptimal.distKm : distOptimal;
+    const finalOptimalMins = osrmOptimal ? osrmOptimal.durationMins : minsOptimal;
+
+    const finalEff = Math.min(100, Math.floor((finalOptimalDist / Math.max(1, finalPlannedDist)) * 100));
+    const finalWasteKm = Number((finalPlannedDist - finalOptimalDist).toFixed(1));
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -93,34 +132,36 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
 
                     {/* KPI Cards */}
                     <div className="grid grid-cols-3 gap-4 mb-6">
-                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                            {!osrmPlanned && <div className="absolute top-0 right-0 m-2 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>}
                             <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">🚗 Current Planned Route</div>
                             <div className="text-2xl font-bold text-slate-800">
-                                {distPlanned} km <span className="text-base text-slate-400 font-medium">/ {Math.floor(minsPlanned / 60)}h {minsPlanned % 60}m</span>
+                                {finalPlannedDist} km <span className="text-base text-slate-400 font-medium">/ {Math.floor(finalPlannedMins / 60)}h {finalPlannedMins % 60}m</span>
                             </div>
                         </div>
-                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
+                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm relative overflow-hidden">
+                            {!osrmOptimal && <div className="absolute top-0 right-0 m-2 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>}
                             <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">✨ AI Optimal Route</div>
                             <div className="text-2xl font-bold text-emerald-900">
-                                {distOptimal} km <span className="text-base text-emerald-600 font-medium">/ {Math.floor(minsOptimal / 60)}h {minsOptimal % 60}m</span>
+                                {finalOptimalDist} km <span className="text-base text-emerald-600 font-medium">/ {Math.floor(finalOptimalMins / 60)}h {finalOptimalMins % 60}m</span>
                             </div>
                         </div>
-                        <div className={`p-4 rounded-xl border shadow-sm ${effectiveness >= 90 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
-                            <div className={`text-xs font-bold uppercase tracking-widest mb-1 ${effectiveness >= 90 ? 'text-blue-600' : 'text-orange-600'}`}>⚡ Effectiveness Score</div>
-                            <div className={`text-2xl font-bold ${effectiveness >= 90 ? 'text-blue-900' : 'text-orange-900'}`}>
-                                {effectiveness}%
+                        <div className={`p-4 rounded-xl border shadow-sm ${finalEff >= 90 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
+                            <div className={`text-xs font-bold uppercase tracking-widest mb-1 ${finalEff >= 90 ? 'text-blue-600' : 'text-orange-600'}`}>⚡ Effectiveness Score</div>
+                            <div className={`text-2xl font-bold ${finalEff >= 90 ? 'text-blue-900' : 'text-orange-900'}`}>
+                                {finalEff}%
                             </div>
                         </div>
                     </div>
 
                     {/* AI Insight */}
-                    <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${effectiveness < 90 ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
-                        <div className="text-2xl">{effectiveness < 90 ? '💡' : '✅'}</div>
+                    <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${finalEff < 90 ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
+                        <div className="text-2xl">{finalEff < 90 ? '💡' : '✅'}</div>
                         <div>
                             <div className="font-bold mb-1">AI Route Validator</div>
                             <p className="text-sm opacity-90">
-                                {effectiveness < 90
-                                    ? `Your planned chronological route travels ${wasteKm} extra kilometres. Rather than driving back-and-forth across town, the AI has geographically rearranged your other meetings around your newly nominated slot, creating a streamlined circular route.`
+                                {finalEff < 90
+                                    ? `Your planned chronological route travels ${finalWasteKm} extra kilometres. Rather than driving back-and-forth across town, the AI has geographically rearranged your other meetings around your newly nominated slot, creating a streamlined circular route.`
                                     : `System Validation: Your planned chronological timeline perfectly matches the mathematical shortest path! This confirms your current schedule is highly efficient and requires no further geographical optimization.`}
                             </p>
                         </div>
@@ -132,7 +173,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col h-[400px]">
                             <h3 className="font-bold text-slate-700 mb-3">Your Planned Sequence (Chronological)</h3>
                             <div className="flex-1 rounded-lg overflow-hidden border border-slate-200 relative z-0">
-                                <RouteMap stops={stopsPlanned} lineColor="#3b82f6" />
+                                <RouteMap stops={stopsPlanned} lineColor="#3b82f6" customGeometry={osrmPlanned?.geometry} />
                             </div>
                         </div>
 
@@ -140,7 +181,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                         <div className="bg-white rounded-xl border border-emerald-200 p-4 shadow-sm flex flex-col h-[400px]">
                             <h3 className="font-bold text-emerald-700 mb-3">AI Optimal Sequence (Shortest Path)</h3>
                             <div className="flex-1 rounded-lg overflow-hidden border border-slate-200 relative z-0">
-                                <RouteMap stops={stopsOptimal} lineColor="#10b981" />
+                                <RouteMap stops={stopsOptimal} lineColor="#10b981" customGeometry={osrmOptimal?.geometry} />
                             </div>
                         </div>
                     </div>
@@ -158,7 +199,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
 };
 
 // Internal Map Component for the overlays
-const RouteMap = ({ stops, lineColor }: { stops: any[], lineColor: string }) => {
+const RouteMap = ({ stops, lineColor, customGeometry }: { stops: any[], lineColor: string, customGeometry?: [number, number][] }) => {
     // Generate icons dynamically so we can show numbers
     const getNumberedIcon = (num: number | string, isBase: boolean, isTarget: boolean, timeStr?: string) => {
         let color = '#64748b'; // slate
@@ -178,10 +219,11 @@ const RouteMap = ({ stops, lineColor }: { stops: any[], lineColor: string }) => 
         });
     };
 
-    const polylinePositions = stops.map(s => [s.lat, s.lng] as [number, number]);
-    if (polylinePositions.length > 0) {
-        polylinePositions.push(polylinePositions[0]); // close the loop back to base
-    }
+    const polylinePositions = customGeometry || (() => {
+        const positions = stops.map(s => [s.lat, s.lng] as [number, number]);
+        if (positions.length > 0) positions.push(positions[0]); // close the loop back to base
+        return positions;
+    })();
 
     return (
         <MapContainer
