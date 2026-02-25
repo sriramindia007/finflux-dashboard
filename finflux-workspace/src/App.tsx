@@ -64,10 +64,12 @@ class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
     }
 }
 
-// Route guard — redirects to /login if no active session
+// Route guard — bypassed to remove login requirement
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-    const isAuth = !!sessionStorage.getItem('finflux_role');
-    return isAuth ? <>{children}</> : <Navigate to="/login" replace />;
+    if (!sessionStorage.getItem('finflux_role')) {
+        sessionStorage.setItem('finflux_role', 'AREA_MANAGER');
+    }
+    return <>{children}</>;
 };
 
 function App() {
@@ -76,8 +78,8 @@ function App() {
             <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                     <Routes>
-                        {/* Login — public entry point */}
-                        <Route path="/login" element={<Login />} />
+                        {/* Login — disabled so it redirects to home */}
+                        <Route path="/login" element={<Navigate to="/" replace />} />
 
                         {/* If in Scheduler Mode, the root redirects directly to the scheduler */}
                         {(import.meta.env.VITE_APP_MODE === 'scheduler' || window.location.hostname === 'finflux.vercel.app' || window.location.hostname.includes('maxp')) ? (
@@ -105,13 +107,15 @@ function App() {
                                     <Route path="geo" element={<GeoDashboard />} />
                                     <Route path="admin" element={<AdminPanel />} />
                                     <Route path="alerts" element={<AlertsDashboard />} />
-                                    <Route path="scheduler" element={<SmartSchedulerPage />} />
                                 </Route>
+
+                                {/* Full-screen Standalone Routes */}
+                                <Route path="/scheduler" element={<ProtectedRoute><SmartSchedulerPage /></ProtectedRoute>} />
                             </>
                         )}
 
-                        {/* Catch-all → login */}
-                        <Route path="*" element={<Navigate to="/login" replace />} />
+                        {/* Catch-all */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </Suspense>
             </ErrorBoundary>

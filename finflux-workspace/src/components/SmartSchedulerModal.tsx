@@ -155,9 +155,9 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     const endTime = selectedSlot ? minsToTime(timeToMins(selectedSlot) + duration) : '—';
 
     // Banner colours based on validity
-    const bannerBg = freqValid ? 'bg-emerald-50' : 'bg-amber-50';
-    const bannerBorder = freqValid ? 'border-emerald-600' : 'border-amber-500';
-    const bannerText = freqValid ? 'text-emerald-700' : 'text-amber-700';
+    const bannerBg = 'bg-slate-50';
+    const bannerBorder = 'border-slate-200';
+    const bannerText = 'text-slate-700';
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
@@ -183,12 +183,10 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                 </div>
 
                 {/* Sub-Header: Frequency Banner (Gap 2) */}
-                {freqMsg && (
-                    <div className={`mx-6 mt-4 px-4 py-2 border rounded-lg flex items-center gap-3 text-sm font-medium ${bannerBg} ${bannerBorder} ${bannerText}`}>
-                        <span className="text-lg">{freqValid ? '✅' : '⚠️'}</span>
-                        <span><strong>Product Frequency:</strong> {cFreq || '—'} • {freqMsg}</span>
-                    </div>
-                )}
+                <div className={`mx-6 mt-4 px-4 py-2 border rounded-lg flex items-center gap-3 text-sm font-medium ${bannerBg} ${bannerBorder} ${bannerText}`}>
+                    <span className="text-lg">📅</span>
+                    <span><strong>Product Frequency:</strong> {cFreq || '—'}</span>
+                </div>
 
                 {/* Quick Stats Strip */}
                 <div className="flex flex-wrap gap-3 mx-6 mt-4">
@@ -489,8 +487,13 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                     onClose={() => setShowAiAnalysis(false)}
                     targetCentre={{ name: centreData.name, lat: cLat, lng: cLng }}
                     selectedSlot={selectedSlot}
+                    recommendedSlot={aiBestSlot}
                     schedule={schedule}
                     duration={calculateDuration(cMembers)}
+                    onApplyRecommendation={(slot) => {
+                        setSelectedSlot(slot);
+                        setShowAiAnalysis(false);
+                    }}
                 />
             )}
         </div>

@@ -54,9 +54,16 @@ function getPermutations<T>(arr: T[]): T[][] {
     return perms;
 }
 
+export function roundToNextHalfHour(mins: number): number {
+    const remainder = mins % 30;
+    if (remainder === 0) return mins;
+    return mins + (30 - remainder);
+}
+
 export function calculateOptimalRoute(
     stops: { name: string, lat: number, lng: number, time: number, type: string }[],
-    durationMins = 30
+    durationMins = 30,
+    targetTimeConstraint?: number
 ): { route: typeof stops, km: number, mins: number, isValid: boolean } {
     if (stops.length <= 2) {
         const metrics = calculateRouteMetrics(stops);
@@ -82,6 +89,7 @@ export function calculateOptimalRoute(
         // Simulate a continuous chronological drive through this specific permutation
         let isValidChronology = true;
         let simulatedMins = DAY_START_MINS;
+        let waitPenalty = 0;
 
         // Start from base (index 0) to first meeting (index 1)
         simulatedMins += Math.max(5, Math.floor((haversineDistance(base.lat, base.lng, currentRoute[1].lat, currentRoute[1].lng) * 1.4 / 25) * 60));
@@ -90,16 +98,21 @@ export function calculateOptimalRoute(
             const currentMeeting = currentRoute[i];
             const nextMeeting = currentRoute[i + 1];
 
+            // Snap to next logical meeting block
+            simulatedMins = roundToNextHalfHour(simulatedMins);
+
             // If this is the Target meeting, we MUST enforce that we didn't arrive "too late" for its scheduled slot.
             // If the user picked 1:00 PM (780 mins), but the geographic drive puts us here at 2:00 PM, this whole route permutation is invalid.
             if (currentMeeting.type === 'target') {
-                if (simulatedMins > currentMeeting.time) {
+                const constraint = targetTimeConstraint ?? currentMeeting.time;
+                if (simulatedMins > constraint) {
                     isValidChronology = false;
                     break;
                 }
                 // If we arrived early, we wait until the scheduled time.
-                if (simulatedMins < currentMeeting.time) {
-                    simulatedMins = currentMeeting.time;
+                if (simulatedMins < constraint) {
+                    waitPenalty += (constraint - simulatedMins);
+                    simulatedMins = constraint;
                 }
             }
 
@@ -118,7 +131,8 @@ export function calculateOptimalRoute(
         }
 
         const penalty = isValidChronology ? 0 : 9999;
-        const totalCost = metrics.km + penalty;
+        // 1 km penalty per ~10 minutes of wait time to encourage logical day flow
+        const totalCost = metrics.km + penalty + (waitPenalty * 0.1);
 
         if (totalCost < bestDist) {
             bestDist = totalCost;
@@ -246,7 +260,7 @@ export function isSlotOccupied(startStr: string, durMins: number, schedule: Meet
 // ---------------------------------------------------------------------------
 // Slot generation
 // ---------------------------------------------------------------------------
-export function generateSlots(start = "09:00", end = "17:30"): string[] {
+export function generateSlots(start = "09:00", end = "19:30"): string[] {
     const slots: string[] = [];
     let currentMins = timeToMins(start);
     const endMins = timeToMins(end);
