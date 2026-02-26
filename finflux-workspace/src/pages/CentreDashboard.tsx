@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Building2, Users, Banknote, TrendingUp, MapPin, UserCheck, ClipboardCheck, Target, AlertTriangle, BadgePercent, ShieldAlert, Download, Camera, Lock } from 'lucide-react';
+import { Building2, Users, Banknote, TrendingUp, MapPin, UserCheck, ClipboardCheck, Target, AlertTriangle, BadgePercent, ShieldAlert, Download, Camera, Lock, Calendar } from 'lucide-react';
 import { saveFile, exportToPDF, exportToPPT } from '../lib/utils';
 import KPICard from '../components/KPICard';
+import SmartSchedulerModal from '../components/SmartSchedulerModal';
 import { ALL_STATES_DATA, getGlobalStats } from '../data/geoDataComplete';
 import { COMPANY_METRICS } from '../data/mfiData';
 import { getBranchFilter, type BranchFilter } from '../data/users';
@@ -51,9 +52,10 @@ const fmtL = (v: number) => `₹${v.toFixed(2)} L`;
 const CentreDashboard = () => {
     const exportRef = useRef<HTMLDivElement>(null);
 
-    // Branch filter (set via Secure Login for BM/Area Manager roles)
     const branchFilter: BranchFilter | null = getBranchFilter();
     const isRestricted = branchFilter !== null;
+
+    const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
 
     const [selectedStateName, setSelectedStateName] = useState<string>(
         isRestricted ? branchFilter!.state : "All"
@@ -504,7 +506,16 @@ const CentreDashboard = () => {
                             <p className="text-secondary-500 flex items-center md:justify-end gap-1 text-xs"><MapPin size={12} /> {centreData.region}</p>
                             <h2 className="text-xl font-bold text-secondary-900 truncate max-w-[180px] sm:max-w-none">{centreData.name}</h2>
                         </div>
-                        <div className="relative group z-50">
+                        <div className="relative group z-50 flex items-center gap-2">
+                            {(selectedCentreName !== 'All') && (
+                                <button
+                                    onClick={() => setIsSchedulerOpen(true)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 py-2 text-sm flex items-center gap-2 shadow-sm font-bold transition-colors"
+                                >
+                                    <Calendar size={15} className="md:hidden lg:block shrink-0" />
+                                    <span className="hidden md:block">Smart Scheduler</span>
+                                </button>
+                            )}
                             <button className="bg-white border border-secondary-200 rounded-lg px-3 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center gap-2 shadow-sm font-medium transition-colors">
                                 <Download size={15} /> Export
                             </button>
@@ -749,6 +760,13 @@ const CentreDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Smart Scheduler Modal */}
+            <SmartSchedulerModal
+                isOpen={isSchedulerOpen}
+                onClose={() => setIsSchedulerOpen(false)}
+                centreData={centreData}
+            />
         </div>
     );
 };
