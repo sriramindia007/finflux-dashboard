@@ -142,7 +142,7 @@ const Layout = () => {
                     <button
                         onClick={() => {
                             sessionStorage.clear();
-                            navigate('/login');
+                            window.location.href = '/login';
                         }}
                         className={cn(
                             "flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-all duration-200 text-secondary-500 hover:bg-rose-50 hover:text-rose-700",
@@ -180,7 +180,7 @@ const Layout = () => {
                         <button
                             onClick={() => {
                                 sessionStorage.clear();
-                                navigate('/login');
+                                window.location.href = '/login';
                             }}
                             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-lg shadow-sm transition-colors"
                         >

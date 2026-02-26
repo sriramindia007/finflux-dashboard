@@ -64,10 +64,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
     }
 }
 
-// Route guard — bypassed to remove login requirement
+// Route guard
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     if (!sessionStorage.getItem('finflux_role')) {
-        sessionStorage.setItem('finflux_role', 'AREA_MANAGER');
+        return <Navigate to="/login" replace />;
     }
     return <>{children}</>;
 };
@@ -78,8 +78,8 @@ function App() {
             <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                     <Routes>
-                        {/* Login — disabled so it redirects to home */}
-                        <Route path="/login" element={<Navigate to="/" replace />} />
+                        {/* Login Route */}
+                        <Route path="/login" element={<Login />} />
 
                         {/* If in Scheduler Mode, the root redirects directly to the scheduler */}
                         {(import.meta.env.VITE_APP_MODE === 'scheduler' || window.location.hostname === 'finflux.vercel.app' || window.location.hostname.includes('maxp')) ? (

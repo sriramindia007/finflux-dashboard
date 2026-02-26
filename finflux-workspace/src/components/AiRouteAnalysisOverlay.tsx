@@ -215,7 +215,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                 <div className="p-6 overflow-y-auto bg-slate-50 flex-1">
 
                     {/* KPI Cards */}
-                    <div className="flex gap-4 mb-6">
+                    <div className="flex flex-col md:flex-row gap-4 mb-6">
                         <div className="flex-1 bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                             {!osrmPlanned && <div className="absolute top-0 right-0 m-2 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>}
                             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">🚗 Your Sequence ({selectedSlot})</div>
@@ -241,7 +241,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                             </div>
                         )}
 
-                        <div className="w-[180px] p-4 rounded-xl border shadow-sm flex flex-col justify-center bg-slate-800 border-slate-900 text-white shrink-0">
+                        <div className="w-full md:w-[180px] p-4 rounded-xl border shadow-sm flex flex-col justify-center bg-slate-800 border-slate-900 text-white shrink-0">
                             <div className="text-[11px] font-bold uppercase tracking-widest mb-1 text-slate-400">Total Distance Saved</div>
                             <div className="text-2xl font-bold tracking-tight text-emerald-400">
                                 {topRightWasteDisplay} km
@@ -266,9 +266,9 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                             </div>
                         </div>
 
-                        <div className="flex gap-6 mt-5 pt-5 border-t border-indigo-200/50">
+                        <div className="flex flex-col lg:flex-row gap-6 mt-5 pt-5 border-t border-indigo-200/50">
                             {/* Route Sequence */}
-                            <div className="flex-1">
+                            <div className="flex-1 border-b lg:border-b-0 border-indigo-200/50 pb-5 lg:pb-0">
                                 <div className="text-xs font-bold uppercase tracking-wider mb-3 text-indigo-800 opacity-80 flex items-center gap-2">
                                     <MapPin size={14} /> Holistic Recommendation Sequence {!isSameSlot ? `(${recommendedSlot})` : ''}
                                 </div>
@@ -293,7 +293,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                             </div>
 
                             {/* Tangible ROI */}
-                            <div className="w-[300px] shrink-0 flex flex-col">
+                            <div className="w-full lg:w-[300px] shrink-0 flex flex-col">
                                 <div className="text-xs font-bold uppercase tracking-wider mb-2 text-emerald-800 opacity-80 flex items-center justify-between">
                                     <div className="flex items-center gap-2">📈 Projected Financial ROI</div>
                                 </div>
@@ -345,8 +345,8 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                             <div className="text-xs font-bold uppercase tracking-wider mb-4 text-slate-800 flex items-center gap-2">
                                 ⚖️ Complete Scenario Analysis
                             </div>
-                            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                                <table className="w-full text-sm text-left">
+                            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                                <table className="w-full text-sm text-left min-w-[600px]">
                                     <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
                                         <tr>
                                             <th className="px-4 py-3 border-r border-slate-200 w-1/4">Metric</th>
@@ -413,7 +413,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                     </div>
 
                     {/* Maps */}
-                    <div className={`grid gap-6 ${isSameSlot ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                    <div className={`grid gap-6 grid-cols-1 md:grid-cols-2 ${!isSameSlot ? 'lg:grid-cols-3' : ''}`}>
                         {/* Planned Map */}
                         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col h-[400px]">
                             <h3 className="font-bold text-slate-700 mb-3 text-sm truncate" title={`Your Sequence (${selectedSlot})`}>Your Sequence ({selectedSlot})</h3>

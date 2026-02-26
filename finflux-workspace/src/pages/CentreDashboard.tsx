@@ -426,7 +426,7 @@ const CentreDashboard = () => {
     };
 
     return (
-        <div ref={exportRef} className="flex flex-col h-[calc(100vh-100px)] p-6 gap-6">
+        <div ref={exportRef} className="flex flex-col h-[calc(100vh-100px)] p-4 sm:p-6 gap-6">
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-secondary-900">Centre Performance & Field Operations</h1>
@@ -499,10 +499,10 @@ const CentreDashboard = () => {
                         </select>
                     </div>
 
-                    <div className="ml-auto text-right flex items-center gap-4">
-                        <div>
-                            <p className="text-secondary-500 flex items-center justify-end gap-1 text-xs"><MapPin size={12} /> {centreData.region}</p>
-                            <h2 className="text-xl font-bold text-secondary-900">{centreData.name}</h2>
+                    <div className="w-full md:w-auto md:ml-auto text-right flex items-center justify-between md:justify-end gap-4 mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                        <div className="text-left md:text-right">
+                            <p className="text-secondary-500 flex items-center md:justify-end gap-1 text-xs"><MapPin size={12} /> {centreData.region}</p>
+                            <h2 className="text-xl font-bold text-secondary-900 truncate max-w-[180px] sm:max-w-none">{centreData.name}</h2>
                         </div>
                         <div className="relative group z-50">
                             <button className="bg-white border border-secondary-200 rounded-lg px-3 py-2 text-sm text-secondary-700 hover:bg-secondary-50 flex items-center gap-2 shadow-sm font-medium transition-colors">

@@ -95,21 +95,21 @@ const SmartSchedulerPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 font-['Inter',sans-serif] text-[#003366] overflow-x-hidden">
             {/* Page Bar */}
-            <div className="bg-white border-b border-[#E2E5E8] px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-40">
-                <h1 className="text-xl font-bold text-[#003366]">Centre Profile</h1>
+            <div className="bg-white border-b border-[#E2E5E8] px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm sticky top-0 z-40">
+                <h1 className="text-lg sm:text-xl font-bold text-[#003366] truncate w-full sm:w-auto">Centre Profile</h1>
                 <button
                     onClick={handleSwitchCentre}
-                    className="h-9 px-4 rounded-full border border-slate-300 text-slate-700 font-semibold text-[13px] hover:bg-slate-50 transition-colors bg-white shadow-sm"
+                    className="h-9 px-4 shrink-0 rounded-full border border-slate-300 text-slate-700 font-semibold text-[13px] hover:bg-slate-50 transition-colors bg-white shadow-sm w-full sm:w-auto text-center"
                 >
                     {currentCentreName === "Tumkur C1" ? "Switch to New Centre" : "Switch to Tumkur C1"}
                 </button>
             </div>
 
             {/* Content Area */}
-            <div className="max-w-[1000px] mx-auto p-4 flex gap-4">
+            <div className="max-w-[1000px] mx-auto p-4 flex flex-col md:flex-row gap-4">
 
                 {/* LEFT COLUMN: Profile Info */}
-                <div className="w-[45%] flex flex-col gap-4">
+                <div className="w-full md:w-[45%] flex flex-col gap-4">
 
                     {/* Overview Card */}
                     <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(27,36,44,0.08)] p-5 relative overflow-hidden">
@@ -152,21 +152,21 @@ const SmartSchedulerPage: React.FC = () => {
                             <button className="text-[#2196F3] font-bold text-[13px] hover:underline">Edit</button>
                         </div>
                         <div className="flex flex-col gap-4 text-[13.5px]">
-                            <div className="flex justify-between"><span className="font-semibold text-[#6684A3]">Next Meeting Date</span><span className="text-[#003366] font-medium">{c.next_meeting}</span></div>
-                            <div className="flex justify-between"><span className="font-semibold text-[#6684A3]">Meeting Frequency</span><span className="text-[#003366] font-medium text-right max-w-[150px] leading-tight">{c.frequency}</span></div>
+                            <div className="flex justify-between flex-wrap gap-1"><span className="font-semibold text-[#6684A3]">Next Meeting Date</span><span className="text-[#003366] font-medium">{c.next_meeting}</span></div>
+                            <div className="flex flex-col sm:flex-row sm:justify-between gap-1"><span className="font-semibold text-[#6684A3]">Meeting Frequency</span><span className="text-[#003366] font-medium sm:text-right max-w-full sm:max-w-[150px] leading-tight break-words">{c.frequency}</span></div>
                         </div>
                     </div>
 
                     {/* Meeting Time Action Row */}
                     <div
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-[#E9F4FE] border border-[#D3EAFD] rounded-xl p-4 cursor-pointer hover:shadow-[0_4px_12px_rgba(33,150,243,0.15)] transition-all flex items-center justify-between group"
+                        className="bg-[#E9F4FE] border border-[#D3EAFD] rounded-xl p-4 cursor-pointer hover:shadow-[0_4px_12px_rgba(33,150,243,0.15)] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
                     >
                         <div>
                             <div className="text-[11px] font-bold text-[#6684A3] uppercase tracking-wider mb-1">📅 Meeting Time</div>
-                            <div className="text-[20px] font-extrabold text-[#2196F3] leading-none">{meetingTime}</div>
+                            <div className="text-xl sm:text-[20px] font-extrabold text-[#2196F3] leading-none">{meetingTime}</div>
                         </div>
-                        <div className="bg-[#2196F3] text-white px-4 py-2 rounded-full text-[13px] font-bold shadow-sm whitespace-nowrap group-hover:bg-[#1976D2] transition-colors flex items-center gap-1">
+                        <div className="bg-[#2196F3] w-full sm:w-auto text-white px-4 py-2.5 sm:py-2 rounded-full text-[14px] sm:text-[13px] font-bold shadow-sm group-hover:bg-[#1976D2] transition-colors flex items-center justify-center gap-1">
                             Get AI Slot <ChevronRight size={16} />
                         </div>
                     </div>
@@ -207,7 +207,7 @@ const SmartSchedulerPage: React.FC = () => {
                 </div>
 
                 {/* RIGHT COLUMN: Groups */}
-                <div className="w-[55%]">
+                <div className="w-full md:w-[55%]">
                     <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(27,36,44,0.08)] mt-0 relative overflow-hidden">
                         <div className="absolute top-0 left-0 right-0 h-1 bg-[#2196F3]"></div>
                         <div className="flex border-b border-[#E2E5E8] px-2 pt-1">
@@ -218,47 +218,47 @@ const SmartSchedulerPage: React.FC = () => {
                         <div className="flex flex-col pb-2">
                             {/* Group Item */}
                             <div className="flex items-center justify-between py-4 px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 rounded-full bg-[#E2E5E8] text-[#003366] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T1</div>
-                                    <div>
-                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Tumkur C1G1</div>
-                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489260</div>
+                                <div className="flex items-center gap-3 sm:gap-4 shrink-0 max-w-[80%]">
+                                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-[#E2E5E8] text-[#003366] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T1</div>
+                                    <div className="min-w-0">
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[14px] sm:text-[15px] group-hover:text-[#2196F3] transition-colors truncate">Tumkur C1G1</div>
+                                        <div className="text-[12px] sm:text-[13px] text-[#6684A3] font-medium truncate">ID: 000032489260</div>
                                     </div>
                                 </div>
-                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                                <ChevronRight className="text-[#C5CBD1] shrink-0 group-hover:text-[#2196F3] transition-colors" size={20} />
                             </div>
 
-                            <div className="flex items-center justify-between py-4 px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 rounded-full bg-[#D1ECCC] text-[#1A9F00] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">RD</div>
-                                    <div>
-                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Radhika Devi</div>
-                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489261</div>
+                            <div className="flex items-center justify-between py-4 px-4 sm:px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div className="flex items-center gap-3 sm:gap-4 shrink-0 max-w-[80%]">
+                                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-[#D1ECCC] text-[#1A9F00] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">RD</div>
+                                    <div className="min-w-0">
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[14px] sm:text-[15px] group-hover:text-[#2196F3] transition-colors truncate">Radhika Devi</div>
+                                        <div className="text-[12px] sm:text-[13px] text-[#6684A3] font-medium truncate">ID: 000032489261</div>
                                     </div>
                                 </div>
-                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                                <ChevronRight className="text-[#C5CBD1] shrink-0 group-hover:text-[#2196F3] transition-colors" size={20} />
                             </div>
 
-                            <div className="flex items-center justify-between py-4 px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 rounded-full bg-[#D3EAFD] text-[#2196F3] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T2</div>
-                                    <div>
-                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Tumkur C1G2</div>
-                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489262</div>
+                            <div className="flex items-center justify-between py-4 px-4 sm:px-6 border-b border-[#F5F6F7] hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div className="flex items-center gap-3 sm:gap-4 shrink-0 max-w-[80%]">
+                                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-[#D3EAFD] text-[#2196F3] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T2</div>
+                                    <div className="min-w-0">
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[14px] sm:text-[15px] group-hover:text-[#2196F3] transition-colors truncate">Tumkur C1G2</div>
+                                        <div className="text-[12px] sm:text-[13px] text-[#6684A3] font-medium truncate">ID: 000032489262</div>
                                     </div>
                                 </div>
-                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                                <ChevronRight className="text-[#C5CBD1] shrink-0 group-hover:text-[#2196F3] transition-colors" size={20} />
                             </div>
 
-                            <div className="flex items-center justify-between py-4 px-6 hover:bg-slate-50 cursor-pointer transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 rounded-full bg-[#FDECDA] text-[#F4A246] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T3</div>
-                                    <div>
-                                        <div className="font-bold text-[#003366] mb-0.5 text-[15px] group-hover:text-[#2196F3] transition-colors">Tumkur C1G3</div>
-                                        <div className="text-[13px] text-[#6684A3] font-medium">ID: 000032489263</div>
+                            <div className="flex items-center justify-between py-4 px-4 sm:px-6 hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div className="flex items-center gap-3 sm:gap-4 shrink-0 max-w-[80%]">
+                                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-[#FDECDA] text-[#F4A246] flex items-center justify-center font-bold text-sm shadow-sm border-2 border-white">T3</div>
+                                    <div className="min-w-0">
+                                        <div className="font-bold text-[#003366] mb-0.5 text-[14px] sm:text-[15px] group-hover:text-[#2196F3] transition-colors truncate">Tumkur C1G3</div>
+                                        <div className="text-[12px] sm:text-[13px] text-[#6684A3] font-medium truncate">ID: 000032489263</div>
                                     </div>
                                 </div>
-                                <ChevronRight className="text-[#C5CBD1] group-hover:text-[#2196F3] transition-colors" size={24} />
+                                <ChevronRight className="text-[#C5CBD1] shrink-0 group-hover:text-[#2196F3] transition-colors" size={20} />
                             </div>
                         </div>
                     </div>

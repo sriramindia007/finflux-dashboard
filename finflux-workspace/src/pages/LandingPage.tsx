@@ -109,10 +109,10 @@ const PERSONAS: Persona[] = [
  * - no entry / null   → show all (fallback for legacy persona-click sessions)
  */
 const ROLE_TO_PERSONAS: Record<string, string[]> = {
-    admin:        ['ceo', 'cfo', 'ops', 'risk', 'branch', 'admin'],
-    bm:           ['branch'],
+    admin: ['ceo', 'cfo', 'ops', 'risk', 'branch', 'admin'],
+    bm: ['branch'],
     area_manager: ['branch'],
-    analyst:      ['ceo', 'cfo', 'ops', 'risk'],
+    analyst: ['ceo', 'cfo', 'ops', 'risk'],
 };
 
 export default function LandingPage() {
@@ -134,7 +134,7 @@ export default function LandingPage() {
 
     const handleLogout = () => {
         sessionStorage.clear();
-        navigate('/login');
+        window.location.href = '/login';
     };
 
     const initials = userName
