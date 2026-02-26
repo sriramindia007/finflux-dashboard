@@ -136,7 +136,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
             try {
                 const points = [...stops, stops[0]]; // Close the loop
                 const coordsString = points.map(s => `${s.lng},${s.lat}`).join(';');
-                const url = `http://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+                const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
 
                 const response = await fetch(url);
                 const data = await response.json();
