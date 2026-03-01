@@ -272,7 +272,7 @@ const GeoDashboard = () => {
     }, [currentView]);
 
     return (
-        <div className="flex flex-col gap-4 h-[calc(100vh-140px)] min-h-[600px]">
+        <div className="flex flex-col gap-4 h-[calc(100vh-148px)] md:h-[calc(100vh-140px)] min-h-[400px] md:min-h-[600px]">
             {/* Breadcrumbs & Navigation */}
             {/* Breadcrumbs & Navigation Bar - Fixed Visibility */}
             <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-secondary-200 shadow-lg text-sm shrink-0 z-50 sticky top-0 relative">
@@ -336,7 +336,7 @@ const GeoDashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full min-h-0">
                 {/* Map Column */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden relative z-0 h-full">
+                <div className="lg:col-span-2 bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden relative z-0 h-[350px] md:h-[450px] lg:h-full">
                     <MapContainer center={mapConfig.center} zoom={mapConfig.zoom} scrollWheelZoom={true} className="h-full w-full">
                         <TileLayer attribution='&copy; OSM' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                         <MapUpdater config={mapConfig} />
