@@ -354,53 +354,51 @@ export function scoreSlot(slotStart: string, attendance: number, collection: num
 export function explainSlot(slotStart: string, breakdown: ScoreBreakdown, durationMins: number, isNewCenter = false): string[] {
     const reasons: string[] = [];
     const hour = parseInt(slotStart.split(':')[0], 10);
-    const { time_of_day_score: tod, attendance_rate: att, collection_rate: col, travel_hours: tHr } = breakdown;
+    const { time_of_day_score: tod, attendance_rate: att, collection_rate: col, travel_hours: tHr,
+        att_contribution: attC, coll_contribution: colC, travel_contribution: travelC, tod_contribution: todC } = breakdown;
 
-    // Time-of-day insight
+    // Score breakdown — show what actually drives the number
+    reasons.push(
+        `📊 **Score breakdown for ${slotStart}** — ` +
+        `Attendance (${Math.floor(att * 100)}%) → **${attC.toFixed(3)}** · ` +
+        `Collection (${Math.floor(col * 100)}%) → **${colC.toFixed(3)}** · ` +
+        `Travel (${Math.round(tHr * 60)} min) → **−${travelC.toFixed(3)}** · ` +
+        `Time-of-day pref → **+${todC.toFixed(3)}** · ` +
+        `Total: **${breakdown.total.toFixed(3)}**`
+    );
+
+    // Time-of-day — the ONLY component that changes between slots
     if (tod >= 0.8) {
-        reasons.push(`🌅 **Peak morning window** — MFI members show highest attendance before 11:30 AM. This slot aligns perfectly.`);
+        reasons.push(`🌅 **Time preference: ${tod.toFixed(2)} (high)** — The 08:30–11:30 window is rated highest for MFI demographics. This slot falls in the peak window.`);
     } else if (tod >= 0.5) {
-        reasons.push(`☀️ **Good morning slot** — Member availability is above average at ${slotStart}.`);
+        reasons.push(`☀️ **Time preference: ${tod.toFixed(2)} (good)** — ${slotStart} is a solid morning slot with above-average availability for borrowers.`);
     } else if (hour >= 13 && hour <= 14) {
-        reasons.push(`⚠️ **Post-lunch window** — Attendance tends to dip slightly after lunch, but this is within your availability.`);
+        reasons.push(`☕ **Time preference: ${tod.toFixed(2)} (lowest window)** — 13:00–14:30 is rated lowest in the formula. Still a valid slot, but the time-of-day component (15% of score) is at its minimum.`);
+    } else if (hour > 16) {
+        reasons.push(`🌆 **Time preference: ${tod.toFixed(2)} (evening)** — Slots after 16:00 score moderate on time preference. The difference vs morning slots is small in absolute score (as this is only 15% of the total formula). Both can be viable choices.`);
     } else {
-        reasons.push(`🕐 **Afternoon slot** — Secondary availability window; earlier slots had conflicts.`);
+        reasons.push(`🕐 **Time preference: ${tod.toFixed(2)} (afternoon)** — Afternoon slot. The time-of-day component (15% weight) is lower than morning but attendance and collection (70% of score) are unchanged.`);
     }
 
-    // Attendance insight
+    // Attendance — honest: same for every slot
     if (isNewCenter) {
-        reasons.push(`🌱 **New Centre Baseline** — No historical data available. Using a conservative ${Math.floor(att * 100)}% baseline attendance assumption.`);
-    } else if (att >= 0.85) {
-        reasons.push(`✅ **High attendance centre** — ${Math.floor(att * 100)}% historical attendance means most members reliably show up.`);
-    } else if (att >= 0.70) {
-        reasons.push(`📊 **Average attendance** — ${Math.floor(att * 100)}% attendance; scheduling at peak time maximises turnout.`);
+        reasons.push(`🌱 **New centre — no history yet.** Using ${Math.floor(att * 100)}% as a standard baseline. This figure is the same across all slot options.`);
     } else {
-        reasons.push(`⚠️ **Low attendance centre** — ${Math.floor(att * 100)}% attendance; choosing the best time slot is especially critical.`);
+        reasons.push(`${att >= 0.80 ? '✅' : att >= 0.70 ? '📊' : '⚠️'} **Historical attendance: ${Math.floor(att * 100)}%** — This is the centre's 90-day average. It is fixed and contributes ${attC.toFixed(3)} identically to every slot option.`);
     }
 
-    // Collection insight
-    if (isNewCenter) {
-        reasons.push(`🌱 **New Target Collection** — Assuming a standard ${Math.floor(col * 100)}% collection target for new centre planning.`);
-    } else if (col >= 0.90) {
-        reasons.push(`💰 **Excellent collection rate** — ${Math.floor(col * 100)}% collection rate boosts this slot's priority score significantly.`);
-    } else if (col >= 0.80) {
-        reasons.push(`💳 **Good collection rate** — ${Math.floor(col * 100)}% collection reinforces the value of this meeting slot.`);
+    // Collection — honest: same for every slot
+    if (!isNewCenter) {
+        reasons.push(`${col >= 0.88 ? '💰' : col >= 0.78 ? '💳' : '⚠️'} **Historical collection: ${Math.floor(col * 100)}%** — 90-day collection rate. Fixed for all slots; contributes ${colC.toFixed(3)} identically regardless of which slot is chosen.`);
     }
 
-    // Travel insight
+    // Travel
     const travelMins = Math.round(tHr * 60);
-    if (travelMins <= 15) {
-        reasons.push(`🚗 **Short travel** — Only ${travelMins} min from last location, minimising field officer transit cost.`);
-    } else if (travelMins <= 30) {
-        reasons.push(`🚗 **Moderate travel** — ${travelMins} min drive is factored into the score.`);
-    } else {
-        reasons.push(`🚗 **Travel noted** — ${travelMins} min drive; slot still recommended because attendance & collection strength outweigh travel cost.`);
-    }
+    reasons.push(`🚗 **Travel from last stop: ${travelMins} min** — Penalty of −${travelC.toFixed(3)} applied. This is also the same across all slot options since it depends on the FO's previous stop location, not the time of day.`);
 
-    // Duration insight
-    reasons.push(`⏱️ **Meeting duration** — ${durationMins} min estimated (${Math.floor(durationMins / 60)}h ${durationMins % 60}m) based on member count and standard 3 min/member protocol.`);
+    // Duration
+    reasons.push(`⏱️ **Estimated meeting duration: ${durationMins} min** — Calculated as 10 min base + 3 min per member (${Math.floor((durationMins - 20) / 3)} members) + 10 min buffer.`);
 
-    // Convert **bold** to HTML since the UI renders it via dangerouslySetInnerHTML
     return reasons.map(r => r.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'));
 }
 

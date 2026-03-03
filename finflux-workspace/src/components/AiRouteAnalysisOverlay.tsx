@@ -14,11 +14,17 @@ interface AiRouteAnalysisOverlayProps {
     recommendedSlot: string | null;
     schedule: MeetingStop[];
     duration: number;
+    // Real centre stats — used for honest comparison, not hardcoded lookup
+    centreAttendanceRate: number;   // e.g. 0.82 from historical data
+    centreCollectionRate: number;   // e.g. 0.91 from historical data
 }
 
 const FO_BASE = { lat: 13.3300, lng: 77.0950, name: "Tumkur Branch Office" };
 
-const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose, onApplyRecommendation, targetCentre, selectedSlot, recommendedSlot, schedule, duration }) => {
+const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({
+    onClose, onApplyRecommendation, targetCentre, selectedSlot, recommendedSlot,
+    schedule, duration, centreAttendanceRate, centreCollectionRate
+}) => {
     // If we are looking at the Holistic recommendation slot natively, we only have one tab
     const isSameSlot = selectedSlot === recommendedSlot;
     const [activeRoiTab, setActiveRoiTab] = useState<'optimized' | 'holistic'>(isSameSlot ? 'optimized' : 'holistic');
@@ -176,16 +182,11 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
     // The savings vs the Geographic sequence
     const finalWasteKm = Number((finalPlannedDist - finalOptimalDist).toFixed(1));
 
-    // Simulated business metrics based on slot (to show trade-off reality)
-    const metricsForSlot = (slot: string) => {
-        const hour = parseInt(slot.split(':')[0]);
-        if (hour <= 10) return { attendance: 92, collection: 95 }; // Morning is great
-        if (hour >= 16) return { attendance: 88, collection: 91 }; // Late afternoon good
-        return { attendance: 78, collection: 72 }; // Average
-    };
-
-    const userMetrics = metricsForSlot(selectedSlot as string);
-    const aiMetrics = typeof recommendedSlot === 'string' ? metricsForSlot(recommendedSlot) : userMetrics;
+    // Use the real centre historical rates for BOTH columns — the slot choice
+    // does NOT change the centre's attendance or collection patterns.
+    // Only the time-of-day component of the AI score differs between slots.
+    const userMetrics = { attendance: Math.round(centreAttendanceRate * 100), collection: Math.round(centreCollectionRate * 100) };
+    const aiMetrics = { attendance: Math.round(centreAttendanceRate * 100), collection: Math.round(centreCollectionRate * 100) };
     const aiWasteKm = Number((finalPlannedDist - finalAiDist).toFixed(1));
 
     // The single number to highlight in the top right KPI card

@@ -155,6 +155,16 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     const duration = calculateDuration(cMembers);
     const endTime = selectedSlot ? minsToTime(timeToMins(selectedSlot) + duration) : '—';
 
+    // Compute the score for whatever slot is currently selected (for honest delta comparison)
+    const selectedScore = selectedSlot
+        ? scoreSlot(selectedSlot, attendance, collection, chainedTravel.mins / 60, isNew).total
+        : null;
+    const scoreDelta = (recScore !== null && selectedScore !== null)
+        ? Number((recScore - selectedScore).toFixed(3))
+        : 0;
+    // Only flag as meaningfully suboptimal if the gap is >0.08 (8 pts on a 0-1 scale)
+    const isMeaningfullySuboptimal = selectedSlot !== aiBestSlot && scoreDelta > 0.08;
+
     // Banner colours based on validity
     const bannerBg = 'bg-slate-50';
     const bannerBorder = 'border-slate-200';
@@ -328,19 +338,24 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                                 </button>
                                             </div>
 
-                                            {/* Suboptimal Selection Warning */}
+                                            {/* Suboptimal Selection — only shown when diff is genuinely material */}
                                             {selectedSlot !== aiBestSlot && (
-                                                <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-top-2">
-                                                    <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
-                                                    <div className="text-orange-900 text-sm">
-                                                        <strong>Suboptimal Selection:</strong> You are overriding the AI's geographic recommendation.
-                                                        <ul className="list-disc ml-5 mt-2 space-y-1 opacity-90 text-[13px]">
-                                                            <li><strong>Productivity:</strong> Disrupts the chronological flow, creating unnecessary downtime between meetings.</li>
-                                                            <li><strong>Distance:</strong> Forces the Field Officer into inefficient back-and-forth travel, increasing fuel costs.</li>
-                                                            <li><strong>Customer Availability:</strong> Diverges from the peak predicted attendance and collection probability window for this specific demographic.</li>
-                                                        </ul>
+                                                isMeaningfullySuboptimal ? (
+                                                    <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-top-2">
+                                                        <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
+                                                        <div className="text-orange-900 text-sm">
+                                                            <strong>Lower-ranked slot selected.</strong> The AI pick ({aiBestSlot}) scores <span className="font-bold">{recScore?.toFixed(3)}</span> vs your choice ({selectedSlot}) at <span className="font-bold">{selectedScore?.toFixed(3)}</span> — a gap of <span className="font-bold">{scoreDelta.toFixed(3)}</span>.
+                                                            <p className="mt-1 opacity-80 text-[12px]">This is driven by the time-of-day preference component ({aiBestSlot} is in a better attendance window for this demographic). Attendance and collection rates are unchanged.</p>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                ) : (
+                                                    <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center gap-2 animate-in slide-in-from-top-2">
+                                                        <span className="text-blue-500 text-sm">ℹ️</span>
+                                                        <p className="text-blue-800 text-xs">
+                                                            <strong>Minor preference difference.</strong> {selectedSlot} scores <strong>{selectedScore?.toFixed(3)}</strong> vs AI pick {aiBestSlot} at <strong>{recScore?.toFixed(3)}</strong> (gap: {scoreDelta.toFixed(3)}). Both slots are viable — the difference is a small time-of-day preference only.
+                                                        </p>
+                                                    </div>
+                                                )
                                             )}
 
                                             {/* Breakdowns */}
@@ -536,6 +551,8 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                     recommendedSlot={aiBestSlot}
                     schedule={schedule}
                     duration={calculateDuration(cMembers)}
+                    centreAttendanceRate={attendance}
+                    centreCollectionRate={collection}
                     onApplyRecommendation={(slot) => {
                         setSelectedSlot(slot);
                         setShowAiAnalysis(false);
