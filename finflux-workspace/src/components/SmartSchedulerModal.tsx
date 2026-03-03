@@ -160,34 +160,36 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     const bannerText = 'text-slate-700';
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm sm:px-4 overflow-y-auto pb-4">
-            <div className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-5xl min-h-screen sm:min-h-0 sm:max-h-[90vh] flex flex-col sm:overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center bg-slate-900/60 backdrop-blur-sm px-2 md:px-4 pt-2 md:pt-0">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[96vh] md:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-4 flex items-start sm:items-center justify-between gap-4">
-                    <div className="w-full">
-                        <h2 className="text-lg sm:text-xl font-bold text-slate-800 break-words leading-tight">{centreData.name} - Smart Scheduler</h2>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span>{MEET_DATE.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>FO: Vinay</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span className="w-full sm:w-auto">{isNew ? '🆕 New Centre (Predictions)' : '✅ Existing Centre (System)'}</span>
+                <div className="bg-slate-50 border-b border-slate-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between shrink-0">
+                    <div className="flex-1 min-w-0 pr-2">
+                        <h2 className="text-base md:text-xl font-bold text-slate-800">Smart Meeting Scheduler</h2>
+                        <p className="text-xs md:text-sm text-slate-500 mt-0.5 flex flex-wrap items-center gap-1 md:gap-2">
+                            <span className="font-medium text-slate-700">{centreData.name}</span>
+                            <span className="hidden md:inline">•</span>
+                            <span className="hidden md:inline">{MEET_DATE.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            <span className="hidden md:inline">•</span>
+                            <span className="hidden md:inline">FO: Vinay</span>
+                            <span className="hidden md:inline">•</span>
+                            <span className="text-[11px]">{isNew ? '🆕 New — predicted data' : '✅ Existing — live data'}</span>
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 -mr-2 shrink-0 hover:bg-slate-200 rounded-full transition-colors hidden sm:block">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors shrink-0">
                         <X className="w-5 h-5 text-slate-500" />
                     </button>
                 </div>
 
                 {/* Sub-Header: Frequency Banner (Gap 2) */}
-                <div className={`mx-4 sm:mx-6 mt-4 px-4 py-2.5 border rounded-lg flex items-start xm:items-center gap-3 text-xs sm:text-sm font-medium ${bannerBg} ${bannerBorder} ${bannerText}`}>
-                    <span className="text-base sm:text-lg">📅</span>
-                    <span className="leading-tight"><strong>Frequency:</strong> {cFreq || '—'}</span>
+                <div className={`mx-3 md:mx-6 mt-3 md:mt-4 px-3 md:px-4 py-2 border rounded-lg flex items-center gap-3 text-xs md:text-sm font-medium shrink-0 ${bannerBg} ${bannerBorder} ${bannerText}`}>
+                    <span className="text-base md:text-lg">📅</span>
+                    <span><strong>Frequency:</strong> {cFreq || '—'}</span>
                 </div>
 
                 {/* Quick Stats Strip */}
-                <div className="flex flex-wrap gap-2 sm:gap-3 mx-4 sm:mx-6 mt-4">
+                <div className="flex flex-wrap gap-2 md:gap-3 mx-3 md:mx-6 mt-3 md:mt-4 shrink-0">
                     <StatChip icon={<Users size={14} />} label="Members" value={cMembers} />
                     <StatChip
                         icon={<ClipboardCheck size={14} />}
@@ -202,9 +204,9 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                         highlight={(!isNew && cCol >= 0.80) ? 'good' : 'warn'}
                     />
                     <StatChip icon={<Clock size={14} />} label="Duration" value={`${duration} min`} />
-                    <div className="flex-1 min-w-[calc(50%-4px)] sm:min-w-[140px] bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 flex flex-col justify-center">
+                    <div className="flex-1 min-w-[130px] bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 flex flex-col justify-center">
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
-                            <MapPin size={10} className="shrink-0" /> <span className="truncate">Travel (Chained)</span>
+                            <MapPin size={10} /> Travel (Chained)
                         </div>
                         <div className="text-sm font-bold text-slate-800 tracking-tight mt-0.5">
                             {chainedTravel.mins} min • {chainedTravel.km} km
@@ -212,11 +214,11 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                     </div>
                 </div>
 
-                {/* Main Content Area: 2 Columns */}
-                <div className="flex flex-col lg:flex-row flex-1 sm:overflow-hidden mt-4">
+                {/* Main Content Area: 2 Columns on desktop, single scrollable column on mobile */}
+                <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden mt-3 md:mt-4">
 
                     {/* LEFT COLUMN: ACTION ZONE */}
-                    <div className="flex-1 border-b lg:border-b-0 lg:border-r border-slate-200 overflow-y-auto px-4 lg:px-6 pb-6">
+                    <div className="flex-1 md:border-r border-slate-200 overflow-y-auto px-3 md:px-6 pb-4 md:pb-6">
                         {isSaved ? (
                             <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-50 duration-300">
                                 <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
@@ -243,14 +245,14 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                             <Zap size={12} /> AI Recommended
                                         </div>
 
-                                        <div className="text-slate-500 font-medium mb-1 text-sm sm:text-base">
+                                        <div className="text-slate-500 font-medium mb-1">
                                             {MEET_DATE.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                         </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 mb-6">
-                                            <div className="text-4xl sm:text-5xl font-extrabold text-indigo-700 tracking-tighter">
+                                        <div className="flex items-baseline gap-3 mb-6">
+                                            <div className="text-5xl font-extrabold text-slate-900 tracking-tighter cursor-pointer text-indigo-700">
                                                 {recSlot}
                                             </div>
-                                            <div className="text-lg sm:text-2xl text-slate-500 font-medium">to {minsToTime(timeToMins(recSlot) + duration)}</div>
+                                            <div className="text-2xl text-slate-500 font-medium">to {minsToTime(timeToMins(recSlot) + duration)}</div>
                                         </div>
 
                                         <div className="flex gap-4">
@@ -341,7 +343,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                    <div className="grid grid-cols-5 gap-2">
                                         {generateSlots().map((slot) => {
                                             const occ = isSlotOccupied(slot, duration, schedule, centreData.name);
                                             const isRec = slot === recSlot;
@@ -399,18 +401,18 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                         )}
                     </div>
 
-                    {/* RIGHT COLUMN: CONTEXT (Map Placeholder) */}
-                    <div className="w-full lg:w-[35%] bg-slate-50 p-4 lg:p-6 flex flex-col shrink-0 lg:shrink min-h-[350px] lg:min-h-0">
-                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Route Context</h3>
+                    {/* RIGHT COLUMN: CONTEXT MAP — stacks below on mobile, side panel on desktop */}
+                    <div className="w-full md:w-[35%] bg-slate-50 p-3 md:p-6 flex flex-col border-t md:border-t-0 md:border-l border-slate-200">
+                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 md:mb-4">Route Context</h3>
 
-                        <div className="flex-1 bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
-                            {/* Interactive Route Map */}
-                            <div className="flex-1 border-b border-slate-100 min-h-[250px] relative z-0">
+                        <div className="bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
+                            {/* Interactive Route Map — fixed height, no flex-1/absolute to avoid clip issues */}
+                            <div className="h-[220px] md:h-[260px] border-b border-slate-100 relative z-0">
                                 <MapContainer
                                     center={[FO_BASE.lat, FO_BASE.lng]}
                                     zoom={11}
-                                    scrollWheelZoom={true}
-                                    className="absolute inset-0 z-0 h-full w-full font-sans"
+                                    scrollWheelZoom={false}
+                                    className="h-full w-full font-sans"
                                 >
                                     <TileLayer
                                         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
@@ -442,8 +444,8 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                 </MapContainer>
                             </div>
 
-                            {/* Schedule Summary */}
-                            <div className="p-4 bg-white hidden lg:block h-[200px] overflow-y-auto">
+                            {/* Schedule Summary — only on larger screens */}
+                            <div className="p-4 bg-white hidden lg:block h-[180px] overflow-y-auto">
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Today's Schedule</h4>
                                 <div className="space-y-3">
                                     {schedule.map((s, i) => (
@@ -463,14 +465,15 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                 </div>
                             </div>
 
-                            {/* Expand Map Button */}
-                            <div className="p-4 border-t border-slate-100 bg-white">
+                            {/* Expand Map Button — always visible, never clipped */}
+                            <div className="p-3 md:p-4 border-t border-slate-100 bg-white">
                                 <button
+                                    id="expand-map-ai-analysis-btn"
                                     onClick={() => setShowAiAnalysis(true)}
-                                    className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition"
+                                    className="w-full py-3 md:py-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition active:scale-95"
                                 >
-                                    <MapPin size={16} className="text-slate-400" />
-                                    Expand Map & AI Analysis
+                                    <MapPin size={16} className="text-indigo-500" />
+                                    Expand Map &amp; AI Analysis
                                 </button>
                             </div>
                         </div>
@@ -505,11 +508,11 @@ const StatChip = ({ icon, label, value, highlight }: { icon: React.ReactNode, la
     if (highlight === 'warn') valColor = 'text-rose-600';
 
     return (
-        <div className="flex-1 min-w-[calc(50%-4px)] sm:min-w-[120px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex flex-col justify-center">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1 truncate">
-                {icon} <span className="truncate">{label}</span>
+        <div className="flex-1 min-w-[120px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex flex-col justify-center">
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                {icon} {label}
             </div>
-            <div className={`text-base sm:text-lg font-bold tracking-tight mt-0.5 ${valColor}`}>
+            <div className={`text-lg font-bold tracking-tight mt-0.5 ${valColor}`}>
                 {value}
             </div>
         </div>
