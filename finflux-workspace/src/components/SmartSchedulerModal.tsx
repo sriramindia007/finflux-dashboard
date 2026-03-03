@@ -32,6 +32,8 @@ import {
     calculateRouteMetrics,
     calculateOptimalRoute
 } from '../lib/schedulerEngine';
+import { fetchSchedulerContext, confirmMeeting } from '../lib/schedulerData';
+import type { SchedulerContext } from '../lib/types/scheduler';
 
 interface SmartSchedulerModalProps {
     isOpen: boolean;
@@ -52,8 +54,12 @@ const INITIAL_FO_SCHEDULE: MeetingStop[] = [
 ];
 
 const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClose, centreData, onConfirm }) => {
+    // Top-level Context State
+    const [ctx, setCtx] = useState<SchedulerContext | null>(null);
+    const [isLoadingContext, setIsLoadingContext] = useState(false);
+
     // We will hardcode some static metadata for "Tumkur C1" to match the Streamlit demo
-    const [schedule, setSchedule] = useState<MeetingStop[]>(INITIAL_FO_SCHEDULE);
+    const [schedule, setSchedule] = useState<MeetingStop[]>([]);
 
     // Engine State
     const [aiBestSlot, setAiBestSlot] = useState<string | null>(null);
@@ -76,28 +82,58 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     const [showAiAnalysis, setShowAiAnalysis] = useState(false);
     const [showStats, setShowStats] = useState(false); // collapsed by default for mobile UX
 
-    // Hardcode some data to match the Streamlit demo exactly if it's the target centre
-    const isTargetCentre = centreData.name.includes("Tumkur C1");
-    // If it's the target centre, use the mock data, else use the dashboard data
-    const cLat = isTargetCentre ? 13.3392 : 13.3392;
-    const cLng = isTargetCentre ? 77.1021 : 77.1021;
-    const cFreq = isTargetCentre ? "Every 4 weeks, on Wednesday" : "Every 4 weeks";
-    const cMembers = isTargetCentre ? 20 : centreData.clients;
-    const cAtt = isTargetCentre ? 0.82 : (centreData.meetings?.avgAttendance / 100 || 0.85);
-    const cCol = isTargetCentre ? 0.91 : (centreData.collection?.withinRange / 100 || 0.88);
-    const isNew = centreData.name.includes("New");
-
     // Mock meeting date for demo purposes (matching streamlit)
     const MEET_DATE = new Date(2026, 1, 24); // 24 Feb 2026
 
+    // Derive real values from context
+    const isTargetCentre = centreData?.name === "Tumkur C1"; // Just in case it's specifically "Tumkur C1" in mock DB
+    const cLat = ctx?.centre.lat ?? centreData?.lat ?? 13.3392;
+    const cLng = ctx?.centre.lng ?? centreData?.lng ?? 77.1021;
+    const cFreq = ctx?.centre.meeting_frequency ?? centreData?.meeting_frequency ?? "Every 4 weeks";
+    const cMembers = ctx?.centre.total_members ?? centreData?.clients ?? 20;
+    const cAtt = ctx?.centre.avg_attendance_rate ?? (centreData?.meetings?.avgAttendance / 100 || 0.85);
+    const cCol = ctx?.centre.avg_collection_rate ?? (centreData?.collection?.withinRange / 100 || 0.88);
+    const isNew = ctx?.centre.centre_type === 'new' || centreData?.name?.includes("New");
+
     const attendance = isNew ? 0.78 : cAtt;
     const collection = isNew ? 0.82 : cCol;
+
+    const availableWindows = ctx?.availabilityWindows ?? DEFAULT_WINDOWS;
+    const foStartBase = ctx?.branch ?? FO_BASE;
+
+    // Load data from Supabase
+    useEffect(() => {
+        if (!isOpen || !centreData?.id) return;
+
+        let active = true;
+        setIsLoadingContext(true);
+        fetchSchedulerContext(centreData.id, MEET_DATE).then(res => {
+            if (!active || !res) return;
+            setCtx(res);
+
+            // Map db FO schedule correctly
+            const initialSchedule: MeetingStop[] = res.foScheduleToday.map(s => ({
+                centre: s.centre_name ?? '',
+                lat: s.centre_lat ?? 0,
+                lng: s.centre_lng ?? 0,
+                start: s.slot_start.slice(0, 5),
+                end: s.slot_end.slice(0, 5),
+                color: "#C53434",
+                bg: "#F9EBEB"
+            }));
+
+            setSchedule(initialSchedule);
+            setIsLoadingContext(false);
+        });
+
+        return () => { active = false; };
+    }, [isOpen, centreData?.id]);
 
     const runRecommendation = () => {
         const dur = calculateDuration(cMembers);
 
         // Gap 1: Chained Travel
-        const travel = calculateChainedTravel(schedule, cLat, cLng, FO_BASE.lat, FO_BASE.lng);
+        const travel = calculateChainedTravel(schedule, cLat, cLng, foStartBase.lat, foStartBase.lng);
         setChainedTravel(travel);
 
         // Gap 2: Frequency Check
@@ -107,7 +143,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
 
         // Run engine
         const { duration, allFeasible: all } = recommendSlot(
-            cMembers, DEFAULT_WINDOWS, attendance, collection, travel.mins, isNew
+            cMembers, availableWindows, attendance, collection, travel.mins, isNew
         );
 
         // Filter out occupied slots
@@ -144,11 +180,11 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     };
 
     useEffect(() => {
-        if (isOpen && !isSaved) {
-            // Only run recommendation when first opening, not after save
+        if (isOpen && !isSaved && !isLoadingContext && ctx) {
+            // Only run recommendation when first opening AND when ctx is loaded
             runRecommendation();
         }
-    }, [isOpen, centreData]);
+    }, [isOpen, ctx, isLoadingContext]);
 
     if (!isOpen) return null;
 
@@ -182,8 +218,12 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                             <span className="font-medium text-slate-700">{centreData.name}</span>
                             <span className="hidden md:inline">•</span>
                             <span className="hidden md:inline">{MEET_DATE.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                            <span className="hidden md:inline">•</span>
-                            <span className="hidden md:inline">FO: Vinay</span>
+                            {ctx?.fo?.name && (
+                                <>
+                                    <span className="hidden md:inline">•</span>
+                                    <span className="hidden md:inline">FO: {ctx.fo.name}</span>
+                                </>
+                            )}
                             <span className="hidden md:inline">•</span>
                             <span className="text-[11px]">{isNew ? '🆕 New — predicted data' : '✅ Existing — live data'}</span>
                         </p>
@@ -309,27 +349,40 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
 
                                             <div className="flex gap-4">
                                                 <button
-                                                    onClick={() => {
+                                                    onClick={async () => {
                                                         setIsSaving(true);
-                                                        setTimeout(() => {
-                                                            setIsSaving(false);
-                                                            setIsSaved(true);
-                                                            // Append to schedule dynamically so map updates
-                                                            if (selectedSlot) {
-                                                                setSchedule(prev => {
-                                                                    const filtered = prev.filter(p => p.centre !== centreData.name);
-                                                                    return [...filtered, {
-                                                                        centre: centreData.name,
-                                                                        lat: centreData.lat || cLat,
-                                                                        lng: centreData.lng || cLng,
-                                                                        start: selectedSlot,
-                                                                        end: endTime,
-                                                                        color: "#3b82f6", // new slot color
-                                                                        bg: "#eff6ff"
-                                                                    }];
-                                                                });
-                                                            }
-                                                        }, 500);
+
+                                                        // Actually save via Supabase
+                                                        if (ctx?.fo?.id && selectedSlot && centreData?.id) {
+                                                            await confirmMeeting(
+                                                                centreData.id,
+                                                                ctx.fo.id,
+                                                                MEET_DATE,
+                                                                selectedSlot,
+                                                                endTime,
+                                                                'Branch Manager',        // scheduledBy
+                                                                aiBestSlot ?? undefined,
+                                                                recScore ?? undefined
+                                                            );
+                                                        }
+
+                                                        setIsSaving(false);
+                                                        setIsSaved(true);
+                                                        // Append to schedule dynamically so map updates
+                                                        if (selectedSlot) {
+                                                            setSchedule(prev => {
+                                                                const filtered = prev.filter(p => p.centre !== centreData.name);
+                                                                return [...filtered, {
+                                                                    centre: centreData.name,
+                                                                    lat: centreData.lat || cLat,
+                                                                    lng: centreData.lng || cLng,
+                                                                    start: selectedSlot,
+                                                                    end: endTime,
+                                                                    color: "#3b82f6", // new slot color
+                                                                    bg: "#eff6ff"
+                                                                }];
+                                                            });
+                                                        }
                                                     }}
                                                     className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
                                                 >
@@ -488,8 +541,8 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                                     />
                                     {/* Base */}
-                                    <Marker position={[FO_BASE.lat, FO_BASE.lng]}>
-                                        <Popup><strong>{FO_BASE.name}</strong><br />Field Officer Base</Popup>
+                                    <Marker position={[foStartBase.lat, foStartBase.lng]}>
+                                        <Popup><strong>{foStartBase.name}</strong><br />Field Officer Base</Popup>
                                     </Marker>
 
                                     {/* Existing Schedule */}

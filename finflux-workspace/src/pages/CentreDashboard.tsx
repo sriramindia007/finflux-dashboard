@@ -9,6 +9,7 @@ import { getBranchFilter, type BranchFilter } from '../data/users';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ScatterChart, Scatter, ZAxis, CartesianGrid } from 'recharts';
 
 interface CentreData {
+    id?: string;
     name: string;
     region: string;
     state: string;
@@ -343,7 +344,16 @@ const CentreDashboard = () => {
         // Deterministic "variance" from centre data so values don't flicker on re-render
         const seed = (centre.clients % 17) + (Math.round(centreGLP * 100) % 13);
 
+        // Map mock centre names to real DB UUIDs for the demo data
+        const demoIds: Record<string, string> = {
+            'Tumkur C1': 'c0000001-0000-0000-0000-000000000001',
+            'Tumkur North C2': 'c0000001-0000-0000-0000-000000000002',
+            'Tumkur South C3': 'c0000001-0000-0000-0000-000000000003',
+            'Tumkur West C1': 'c0000001-0000-0000-0000-000000000004'
+        };
+
         return {
+            id: demoIds[centre.name],
             name: centre.name,
             region: branch.name,
             state: state.name,
