@@ -136,7 +136,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
             try {
                 const points = [...stops, stops[0]]; // Close the loop
                 const coordsString = points.map(s => `${s.lng},${s.lat}`).join(';');
-                const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+                const url = `http://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -196,18 +196,18 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
             <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-                            <MapPin size={20} />
+                <div className="flex items-start md:items-center justify-between px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center shrink-0">
+                            <MapPin size={18} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-800">🗺️ AI Route Effectiveness Analysis</h2>
-                            <p className="text-sm text-slate-500">Current chronological plan vs AI shortest path</p>
+                            <h2 className="text-base md:text-xl font-bold text-slate-800 leading-tight">🗺️ AI Route Effectiveness Analysis</h2>
+                            <p className="text-xs md:text-sm text-slate-500 mt-0.5">Current plan vs shortest path</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <X className="w-6 h-6 text-slate-500" />
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0 -mt-1 md:mt-0">
+                        <X className="w-5 h-5 md:w-6 md:h-6 text-slate-500" />
                     </button>
                 </div>
 
@@ -266,9 +266,9 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                             </div>
                         </div>
 
-                        <div className="flex flex-col lg:flex-row gap-6 mt-5 pt-5 border-t border-indigo-200/50">
+                        <div className="flex flex-col md:flex-row gap-6 mt-5 pt-5 border-t border-indigo-200/50">
                             {/* Route Sequence */}
-                            <div className="flex-1 border-b lg:border-b-0 border-indigo-200/50 pb-5 lg:pb-0">
+                            <div className="flex-1">
                                 <div className="text-xs font-bold uppercase tracking-wider mb-3 text-indigo-800 opacity-80 flex items-center gap-2">
                                     <MapPin size={14} /> Holistic Recommendation Sequence {!isSameSlot ? `(${recommendedSlot})` : ''}
                                 </div>
@@ -293,7 +293,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                             </div>
 
                             {/* Tangible ROI */}
-                            <div className="w-full lg:w-[300px] shrink-0 flex flex-col">
+                            <div className="w-full md:w-[300px] shrink-0 flex flex-col">
                                 <div className="text-xs font-bold uppercase tracking-wider mb-2 text-emerald-800 opacity-80 flex items-center justify-between">
                                     <div className="flex items-center gap-2">📈 Projected Financial ROI</div>
                                 </div>
@@ -413,9 +413,9 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                     </div>
 
                     {/* Maps */}
-                    <div className={`grid gap-6 grid-cols-1 md:grid-cols-2 ${!isSameSlot ? 'lg:grid-cols-3' : ''}`}>
+                    <div className={`grid gap-6 grid-cols-1 ${isSameSlot ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
                         {/* Planned Map */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col h-[400px]">
+                        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col h-[300px] md:h-[400px]">
                             <h3 className="font-bold text-slate-700 mb-3 text-sm truncate" title={`Your Sequence (${selectedSlot})`}>Your Sequence ({selectedSlot})</h3>
                             <div className="flex-1 rounded-lg overflow-hidden border border-slate-200 relative z-0">
                                 <RouteMap stops={stopsPlanned} lineColor="#64748b" customGeometry={osrmPlanned?.geometry} />
@@ -423,7 +423,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                         </div>
 
                         {/* Optimal Map */}
-                        <div className="bg-white rounded-xl border border-blue-200 p-4 shadow-sm flex flex-col h-[400px]">
+                        <div className="bg-white rounded-xl border border-blue-200 p-4 shadow-sm flex flex-col h-[300px] md:h-[400px]">
                             <h3 className="font-bold text-blue-700 mb-3 text-sm truncate" title={`Geographically Optimized (${selectedSlot})`}>Geographically Optimized ({selectedSlot})</h3>
                             <div className="flex-1 rounded-lg overflow-hidden border border-blue-200 relative z-0">
                                 <RouteMap stops={stopsOptimal} lineColor="#3b82f6" customGeometry={osrmOptimal?.geometry} />
@@ -432,7 +432,7 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
 
                         {/* AI Recommended Map */}
                         {!isSameSlot && (
-                            <div className="bg-white rounded-xl border border-indigo-200 p-4 shadow-sm flex flex-col h-[400px] ring-2 ring-indigo-500/20 shadow-indigo-500/10">
+                            <div className="bg-white rounded-xl border border-indigo-200 p-4 shadow-sm flex flex-col h-[300px] md:h-[400px] ring-2 ring-indigo-500/20 shadow-indigo-500/10">
                                 <h3 className="font-bold text-indigo-700 mb-3 text-sm truncate flex justify-between items-center group">
                                     <span title={`AI Holistic Recommendation (${recommendedSlot})`}>AI Holistic Recommendation ({recommendedSlot})</span>
                                     <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">Business Optimum</span>
@@ -446,16 +446,16 @@ const AiRouteAnalysisOverlay: React.FC<AiRouteAnalysisOverlayProps> = ({ onClose
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-2xl">
-                    <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition shadow-sm">
+                <div className="px-4 md:px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-end gap-3 rounded-b-2xl">
+                    <button onClick={onClose} className="w-full md:w-auto px-6 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition shadow-sm order-2 md:order-1">
                         Close Analysis
                     </button>
                     {!isSameSlot && recommendedSlot && onApplyRecommendation && (
                         <button
                             onClick={() => onApplyRecommendation(recommendedSlot)}
-                            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-sm flex items-center gap-2"
+                            className="w-full md:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-sm flex items-center justify-center gap-2 order-1 md:order-2"
                         >
-                            <span>✨ Apply Holistic Recommendation ({recommendedSlot})</span>
+                            <span>✨ Apply Recommendation ({recommendedSlot})</span>
                         </button>
                     )}
                 </div>

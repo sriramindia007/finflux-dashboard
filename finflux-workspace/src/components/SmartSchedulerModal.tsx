@@ -336,14 +336,14 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                 <div className="mt-8 animate-in fade-in duration-300">
                                     <div className="mb-4">
                                         <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Select a Time Slot</h4>
-                                        <div className="text-xs text-slate-500 flex items-center gap-3">
-                                            <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-rose-200 border border-rose-300"></div> Occupied by another centre</span>
+                                        <div className="text-[11px] md:text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3">
+                                            <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-rose-200 border border-rose-300"></div> Occupied</span>
                                             <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> AI Pick</span>
-                                            <span>Click any free slot to select</span>
+                                            <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-white border border-slate-300"></div> Free</span>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-5 gap-2">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                                         {generateSlots().map((slot) => {
                                             const occ = isSlotOccupied(slot, duration, schedule, centreData.name);
                                             const isRec = slot === recSlot;
