@@ -405,6 +405,18 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                     <div className="w-full md:w-[35%] bg-slate-50 p-3 md:p-6 flex flex-col border-t md:border-t-0 md:border-l border-slate-200">
                         <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 md:mb-4">Route Context</h3>
 
+                        {/* Expand Map Button — at TOP so it's always visible on mobile */}
+                        <div className="mb-3">
+                            <button
+                                id="expand-map-ai-analysis-btn"
+                                onClick={() => setShowAiAnalysis(true)}
+                                className="w-full py-3 md:py-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition active:scale-95"
+                            >
+                                <MapPin size={16} className="text-indigo-500" />
+                                Expand Map &amp; AI Analysis
+                            </button>
+                        </div>
+
                         <div className="bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
                             {/* Interactive Route Map — fixed height, no flex-1/absolute to avoid clip issues */}
                             <div className="h-[220px] md:h-[260px] border-b border-slate-100 relative z-0">
@@ -465,17 +477,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                 </div>
                             </div>
 
-                            {/* Expand Map Button — always visible, never clipped */}
-                            <div className="p-3 md:p-4 border-t border-slate-100 bg-white">
-                                <button
-                                    id="expand-map-ai-analysis-btn"
-                                    onClick={() => setShowAiAnalysis(true)}
-                                    className="w-full py-3 md:py-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition active:scale-95"
-                                >
-                                    <MapPin size={16} className="text-indigo-500" />
-                                    Expand Map &amp; AI Analysis
-                                </button>
-                            </div>
+
                         </div>
                     </div>
                 </div>
