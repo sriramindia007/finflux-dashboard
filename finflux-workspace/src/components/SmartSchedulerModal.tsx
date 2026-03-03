@@ -74,6 +74,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+    const [showStats, setShowStats] = useState(false); // collapsed by default for mobile UX
 
     // Hardcode some data to match the Streamlit demo exactly if it's the target centre
     const isTargetCentre = centreData.name.includes("Tumkur C1");
@@ -188,30 +189,70 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                     <span><strong>Frequency:</strong> {cFreq || '—'}</span>
                 </div>
 
-                {/* Quick Stats Strip */}
-                <div className="flex flex-wrap gap-2 md:gap-3 mx-3 md:mx-6 mt-3 md:mt-4 shrink-0">
-                    <StatChip icon={<Users size={14} />} label="Members" value={cMembers} />
-                    <StatChip
-                        icon={<ClipboardCheck size={14} />}
-                        label="Attendance"
-                        value={`${Math.floor((isNew ? 0.78 : cAtt) * 100)}%`}
-                        highlight={(!isNew && cAtt >= 0.75) ? 'good' : 'warn'}
-                    />
-                    <StatChip
-                        icon={<Banknote size={14} />}
-                        label="Collection"
-                        value={`${Math.floor((isNew ? 0.82 : cCol) * 100)}%`}
-                        highlight={(!isNew && cCol >= 0.80) ? 'good' : 'warn'}
-                    />
-                    <StatChip icon={<Clock size={14} />} label="Duration" value={`${duration} min`} />
-                    <div className="flex-1 min-w-[130px] bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 flex flex-col justify-center">
-                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
-                            <MapPin size={10} /> Travel (Chained)
+                {/* Quick Stats Strip — collapsed by default, tap to expand */}
+                <div className="mx-3 md:mx-6 mt-2 md:mt-3 shrink-0">
+                    {/* Collapsed summary bar — always visible */}
+                    <button
+                        onClick={() => setShowStats(s => !s)}
+                        className="w-full flex items-center justify-between px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 transition-colors"
+                    >
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <span className="flex items-center gap-1">
+                                <Users size={12} className="text-slate-400" />
+                                <span className="font-bold text-slate-700">{cMembers}</span> members
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span>
+                                Att: <span className={`font-bold ${(!isNew && cAtt >= 0.75) ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                    {Math.floor((isNew ? 0.78 : cAtt) * 100)}%
+                                </span>
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span>
+                                Col: <span className={`font-bold ${(!isNew && cCol >= 0.80) ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                    {Math.floor((isNew ? 0.82 : cCol) * 100)}%
+                                </span>
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span><span className="font-bold text-slate-700">{duration}</span> min</span>
+                            {chainedTravel.mins > 0 && (
+                                <><span className="text-slate-300">•</span>
+                                    <span className="flex items-center gap-1">
+                                        <MapPin size={10} className="text-blue-400" />
+                                        <span className="font-bold text-slate-700">{chainedTravel.km} km</span>
+                                    </span></>
+                            )}
                         </div>
-                        <div className="text-sm font-bold text-slate-800 tracking-tight mt-0.5">
-                            {chainedTravel.mins} min • {chainedTravel.km} km
+                        <ChevronDown size={14} className={`text-slate-400 shrink-0 ml-2 transition-transform duration-200 ${showStats ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Expanded stat chips */}
+                    {showStats && (
+                        <div className="flex flex-wrap gap-2 mt-2 animate-in slide-in-from-top-2 duration-200">
+                            <StatChip icon={<Users size={14} />} label="Members" value={cMembers} />
+                            <StatChip
+                                icon={<ClipboardCheck size={14} />}
+                                label="Attendance"
+                                value={`${Math.floor((isNew ? 0.78 : cAtt) * 100)}%`}
+                                highlight={(!isNew && cAtt >= 0.75) ? 'good' : 'warn'}
+                            />
+                            <StatChip
+                                icon={<Banknote size={14} />}
+                                label="Collection"
+                                value={`${Math.floor((isNew ? 0.82 : cCol) * 100)}%`}
+                                highlight={(!isNew && cCol >= 0.80) ? 'good' : 'warn'}
+                            />
+                            <StatChip icon={<Clock size={14} />} label="Duration" value={`${duration} min`} />
+                            <div className="flex-1 min-w-[130px] bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 flex flex-col justify-center">
+                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <MapPin size={10} /> Travel (Chained)
+                                </div>
+                                <div className="text-sm font-bold text-slate-800 tracking-tight mt-0.5">
+                                    {chainedTravel.mins} min • {chainedTravel.km} km
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Main Content Area: 2 Columns on desktop, single scrollable column on mobile */}
