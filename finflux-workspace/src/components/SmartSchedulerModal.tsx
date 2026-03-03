@@ -236,104 +236,106 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                 </button>
                             </div>
                         ) : (
-                            <>
-                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">AI Optimized Slot Schedule</h3>
+                            <div className="flex flex-col-reverse md:flex-col">
+                                <div className="mt-8 md:mt-0">
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">AI Optimized Slot Schedule</h3>
 
-                                {recSlot ? (
-                                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-6 relative shadow-sm">
-                                        <div className="absolute top-4 right-4 bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-                                            <Zap size={12} /> AI Recommended
-                                        </div>
-
-                                        <div className="text-slate-500 font-medium mb-1">
-                                            {MEET_DATE.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                        </div>
-                                        <div className="flex items-baseline gap-3 mb-6">
-                                            <div className="text-5xl font-extrabold text-slate-900 tracking-tighter cursor-pointer text-indigo-700">
-                                                {recSlot}
+                                    {recSlot ? (
+                                        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-6 relative shadow-sm">
+                                            <div className="absolute top-4 right-4 bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                                                <Zap size={12} /> AI Recommended
                                             </div>
-                                            <div className="text-2xl text-slate-500 font-medium">to {minsToTime(timeToMins(recSlot) + duration)}</div>
-                                        </div>
 
-                                        <div className="flex gap-4">
-                                            <button
-                                                onClick={() => {
-                                                    setIsSaving(true);
-                                                    setTimeout(() => {
-                                                        setIsSaving(false);
-                                                        setIsSaved(true);
-                                                        // Append to schedule dynamically so map updates
-                                                        if (selectedSlot) {
-                                                            setSchedule(prev => {
-                                                                const filtered = prev.filter(p => p.centre !== centreData.name);
-                                                                return [...filtered, {
-                                                                    centre: centreData.name,
-                                                                    lat: centreData.lat || cLat,
-                                                                    lng: centreData.lng || cLng,
-                                                                    start: selectedSlot,
-                                                                    end: endTime,
-                                                                    color: "#3b82f6", // new slot color
-                                                                    bg: "#eff6ff"
-                                                                }];
-                                                            });
-                                                        }
-                                                    }, 500);
-                                                }}
-                                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
-                                            >
-                                                {isSaving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CalendarCheck className="w-5 h-5" />}
-                                                Confirm This Slot
-                                            </button>
-                                        </div>
-
-                                        {/* Suboptimal Selection Warning */}
-                                        {selectedSlot !== aiBestSlot && (
-                                            <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-top-2">
-                                                <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
-                                                <div className="text-orange-900 text-sm">
-                                                    <strong>Suboptimal Selection:</strong> You are overriding the AI's geographic recommendation.
-                                                    <ul className="list-disc ml-5 mt-2 space-y-1 opacity-90 text-[13px]">
-                                                        <li><strong>Productivity:</strong> Disrupts the chronological flow, creating unnecessary downtime between meetings.</li>
-                                                        <li><strong>Distance:</strong> Forces the Field Officer into inefficient back-and-forth travel, increasing fuel costs.</li>
-                                                        <li><strong>Customer Availability:</strong> Diverges from the peak predicted attendance and collection probability window for this specific demographic.</li>
-                                                    </ul>
+                                            <div className="text-slate-500 font-medium mb-1">
+                                                {MEET_DATE.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                            </div>
+                                            <div className="flex items-baseline gap-3 mb-6">
+                                                <div className="text-5xl font-extrabold text-slate-900 tracking-tighter cursor-pointer text-indigo-700">
+                                                    {recSlot}
                                                 </div>
+                                                <div className="text-2xl text-slate-500 font-medium">to {minsToTime(timeToMins(recSlot) + duration)}</div>
                                             </div>
-                                        )}
 
-                                        {/* Breakdowns */}
-                                        <div className="mt-6 border-t border-indigo-100/50 pt-4">
-                                            <button
-                                                onClick={() => setShowBreakdown(!showBreakdown)}
-                                                className="flex items-center justify-between w-full text-left font-semibold text-indigo-900 hover:text-indigo-700"
-                                            >
-                                                <span className="flex items-center gap-2">
-                                                    <AlertTriangle size={16} className="text-indigo-500" />
-                                                    Why did AI pick this time? ({recScore?.toFixed(2)} Score)
-                                                </span>
-                                                <ChevronDown size={18} className={`transition-transform ${showBreakdown ? 'rotate-180' : ''}`} />
-                                            </button>
+                                            <div className="flex gap-4">
+                                                <button
+                                                    onClick={() => {
+                                                        setIsSaving(true);
+                                                        setTimeout(() => {
+                                                            setIsSaving(false);
+                                                            setIsSaved(true);
+                                                            // Append to schedule dynamically so map updates
+                                                            if (selectedSlot) {
+                                                                setSchedule(prev => {
+                                                                    const filtered = prev.filter(p => p.centre !== centreData.name);
+                                                                    return [...filtered, {
+                                                                        centre: centreData.name,
+                                                                        lat: centreData.lat || cLat,
+                                                                        lng: centreData.lng || cLng,
+                                                                        start: selectedSlot,
+                                                                        end: endTime,
+                                                                        color: "#3b82f6", // new slot color
+                                                                        bg: "#eff6ff"
+                                                                    }];
+                                                                });
+                                                            }
+                                                        }, 500);
+                                                    }}
+                                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
+                                                >
+                                                    {isSaving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CalendarCheck className="w-5 h-5" />}
+                                                    Confirm This Slot
+                                                </button>
+                                            </div>
 
-                                            {showBreakdown && insights.length > 0 && (
-                                                <div className="mt-4 space-y-3 pl-6 border-l-2 border-indigo-200 ml-2 animate-in slide-in-from-top-2 duration-200">
-                                                    {insights.map((insight, idx) => (
-                                                        <p key={idx} className="text-sm text-slate-700 leading-relaxed"
-                                                            dangerouslySetInnerHTML={{ __html: insight }} />
-                                                    ))}
+                                            {/* Suboptimal Selection Warning */}
+                                            {selectedSlot !== aiBestSlot && (
+                                                <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-top-2">
+                                                    <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
+                                                    <div className="text-orange-900 text-sm">
+                                                        <strong>Suboptimal Selection:</strong> You are overriding the AI's geographic recommendation.
+                                                        <ul className="list-disc ml-5 mt-2 space-y-1 opacity-90 text-[13px]">
+                                                            <li><strong>Productivity:</strong> Disrupts the chronological flow, creating unnecessary downtime between meetings.</li>
+                                                            <li><strong>Distance:</strong> Forces the Field Officer into inefficient back-and-forth travel, increasing fuel costs.</li>
+                                                            <li><strong>Customer Availability:</strong> Diverges from the peak predicted attendance and collection probability window for this specific demographic.</li>
+                                                        </ul>
+                                                    </div>
                                                 </div>
                                             )}
+
+                                            {/* Breakdowns */}
+                                            <div className="mt-6 border-t border-indigo-100/50 pt-4">
+                                                <button
+                                                    onClick={() => setShowBreakdown(!showBreakdown)}
+                                                    className="flex items-center justify-between w-full text-left font-semibold text-indigo-900 hover:text-indigo-700"
+                                                >
+                                                    <span className="flex items-center gap-2">
+                                                        <AlertTriangle size={16} className="text-indigo-500" />
+                                                        Why did AI pick this time? ({recScore?.toFixed(2)} Score)
+                                                    </span>
+                                                    <ChevronDown size={18} className={`transition-transform ${showBreakdown ? 'rotate-180' : ''}`} />
+                                                </button>
+
+                                                {showBreakdown && insights.length > 0 && (
+                                                    <div className="mt-4 space-y-3 pl-6 border-l-2 border-indigo-200 ml-2 animate-in slide-in-from-top-2 duration-200">
+                                                        {insights.map((insight, idx) => (
+                                                            <p key={idx} className="text-sm text-slate-700 leading-relaxed"
+                                                                dangerouslySetInnerHTML={{ __html: insight }} />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 text-center">
-                                        <div className="text-rose-600 mb-4 flex justify-center"><AlertTriangle size={48} /></div>
-                                        <h3 className="text-xl font-bold text-rose-900 mb-2">No Feasible Slots Available</h3>
-                                        <p className="text-rose-700">The field officer's schedule is fully booked or there are no slots that fit within the availability windows that do not conflict with existing meetings.</p>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 text-center">
+                                            <div className="text-rose-600 mb-4 flex justify-center"><AlertTriangle size={48} /></div>
+                                            <h3 className="text-xl font-bold text-rose-900 mb-2">No Feasible Slots Available</h3>
+                                            <p className="text-rose-700">The field officer's schedule is fully booked or there are no slots that fit within the availability windows that do not conflict with existing meetings.</p>
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Alternative Selection Grid */}
-                                <div className="mt-8 animate-in fade-in duration-300">
+                                <div className="mt-0 md:mt-8 mb-4 md:mb-0 animate-in fade-in duration-300">
                                     <div className="mb-4">
                                         <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Select a Time Slot</h4>
                                         <div className="text-[11px] md:text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3">
@@ -397,7 +399,7 @@ const SmartSchedulerModal: React.FC<SmartSchedulerModalProps> = ({ isOpen, onClo
                                         })}
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
 
